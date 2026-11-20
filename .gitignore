@@ -1,0 +1,5 @@
+dist/
+.playwright-cli/
+node_modules/
+.env
+.env.*

@@ -1,0 +1,188 @@
+/* Donor desktop workspace */
+.donor-hub {
+  --donor-ink: #3a242a;
+  --donor-muted: #6c5159;
+  --donor-wine: #852f48;
+  --donor-wine-dark: #642639;
+  --donor-line: #e9d9dc;
+  --donor-soft: #fbf0f1;
+  color: var(--donor-ink);
+  padding-bottom: 70px;
+}
+.donor-hub h1,
+.donor-hub h2,
+.donor-hub h3 { color: var(--donor-ink); }
+.donor-hero {
+  display: grid;
+  align-items: center;
+  min-height: 306px;
+  padding: clamp(30px, 4vw, 63px);
+  border-radius: 22px 22px 6px 6px;
+  background:
+    linear-gradient(90deg, #f7dce1 14%, #f7dce1f2 42%, #f7dce12b 73%, transparent 85%),
+    #f7dce1 url('assets/card-donation.png') center 51% / cover no-repeat;
+}
+.donor-hero-copy { max-width: 570px; }
+.donor-small-label {
+  color: var(--donor-wine-dark);
+  font-size: .8rem;
+  font-weight: 750;
+  letter-spacing: .055em;
+  margin: 0 0 10px;
+}
+.donor-hero h1 {
+  font-size: clamp(42px, 5.5vw, 76px);
+  line-height: 1;
+  letter-spacing: -.05em;
+  margin: 0;
+}
+.donor-hero-copy > p:not(.donor-small-label) {
+  max-width: 44ch;
+  margin: 16px 0 20px;
+  line-height: 1.6;
+  color: #493037;
+}
+.donor-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 11px 20px;
+}
+.donor-hub .donor-submit {
+  background: var(--donor-wine);
+  border-color: var(--donor-wine);
+  color: #fff;
+  font-weight: 700;
+}
+.donor-hub .donor-submit:hover { background: var(--donor-wine-dark); }
+.donor-hero-link,
+.donor-center-links a,
+.donor-hub-prepare a,
+.donor-hub-success a {
+  color: var(--donor-wine-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.donor-hub-layout {
+  display: grid;
+  grid-template-columns: minmax(0, .88fr) minmax(0, 1.12fr);
+  gap: clamp(17px, 3vw, 36px);
+  margin-top: clamp(20px, 4vw, 46px);
+  align-items: start;
+}
+.donor-hub-center,
+.donor-hub-booking { scroll-margin-top: 24px; }
+.donor-hub-center {
+  padding: clamp(18px, 2.6vw, 33px) 0;
+}
+.donor-hub h2 { margin: 0 0 .45em; font-size: clamp(1.42rem, 2.6vw, 2rem); line-height: 1.1; }
+.donor-search-field {
+  margin: 19px 0 15px;
+  font-weight: 650;
+}
+.donor-hub input[type="search"] {
+  margin-top: 6px;
+  border: 1px solid #c7acb2;
+  background: #fff;
+}
+.donor-center-record {
+  padding: clamp(17px, 2.6vw, 27px);
+  border: 1px solid var(--donor-line);
+  border-left: 4px solid var(--donor-wine);
+  border-radius: 4px 14px 14px 4px;
+  background: var(--donor-soft);
+}
+.donor-center-record h3 { margin: 0 0 .45em; line-height: 1.2; }
+.donor-center-record > p:not(.donor-small-label),
+.donor-booking-heading p,
+.donor-hub-prepare p:not(.donor-small-label) {
+  color: var(--donor-muted);
+  line-height: 1.55;
+  margin: 0 0 11px;
+}
+.donor-center-record .donor-center-address { color: var(--donor-ink); font-weight: 700; }
+.donor-center-links { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.donor-hub-booking {
+  padding: clamp(17px, 2.6vw, 34px);
+  border: 1px solid var(--donor-line);
+  border-radius: 15px;
+  background: #fff;
+}
+.donor-booking-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.donor-zone {
+  color: var(--donor-wine-dark);
+  background: var(--donor-soft);
+  padding: 6px 9px;
+  white-space: nowrap;
+  border-radius: 5px;
+  font-size: .8rem;
+}
+.donor-booking-field { padding: 0; border: 0; margin: 14px 0; min-width: 0; }
+.donor-booking-field legend { margin-bottom: 8px; font-weight: 750; }
+.donor-day-strip {
+  display: grid;
+  grid-template-columns: repeat(5,minmax(0,1fr));
+  gap: 7px;
+}
+.donor-hub .donor-day,
+.donor-hub .donor-time-slot {
+  border: 1px solid #cebbc0;
+  background: #fff;
+  color: var(--donor-ink);
+  border-radius: 8px;
+  font: inherit;
+  cursor: pointer;
+}
+.donor-day {
+  display: grid;
+  justify-items: center;
+  padding: 7px 5px;
+  min-height: 77px;
+  line-height: 1.15;
+}
+.donor-day strong { font-size: 1.25rem; }
+.donor-day small { line-height: 1.1; }
+.donor-time-strip { display: flex; flex-wrap: wrap; gap: 7px; }
+.donor-hub .donor-time-slot { padding: 8px 15px; font-weight: 700; }
+.donor-hub .donor-time-slot:disabled { cursor: default; border-style: dashed; background: #f5f2f2; color: #675b5d; text-decoration: line-through; }
+.donor-hub button:is(.donor-day,.donor-time-slot):not(:disabled):hover { border-color: var(--donor-wine-dark); }
+.donor-hub button:is(.donor-day,.donor-time-slot)[aria-pressed="true"] { background: var(--donor-wine); border-color: var(--donor-wine); color: #fff; }
+.donor-hub-consent { display: flex; align-items: start; gap: 7px; margin: 18px 0 12px; }
+.donor-hub-consent input[type="checkbox"] { flex: none; width: 18px; min-height: 18px; height: 18px; margin-top: .15em; accent-color: var(--donor-wine); }
+.donor-hub-signin, .donor-hub-error { margin: 12px 0; color: var(--donor-muted); }
+.donor-hub-error { color: #8b1837; }
+.donor-hub-success { padding: 12px 16px; background: #e9f5ea; border: 1px solid #b4cfba; border-radius: 8px; }
+.donor-hub-success p { margin: 6px 0; }
+.donor-hub-prepare {
+  display: grid;
+  grid-template-columns: minmax(0,1.25fr) minmax(0,.75fr);
+  gap: 28px;
+  margin-top: 27px;
+  padding: clamp(18px, 3vw, 32px);
+  background: var(--donor-soft);
+  border-top: 1px solid var(--donor-line);
+  border-bottom: 1px solid var(--donor-line);
+}
+.donor-resource-links { list-style: none; margin: 0; padding: 0; align-self: center; }
+.donor-resource-links li { padding: 8px 0; }
+.donor-resource-links li + li { border-top: 1px solid var(--donor-line); }
+@media (max-width: 800px) {
+  .donor-hub-layout, .donor-hub-prepare { grid-template-columns: 1fr; gap: 18px; }
+  .donor-booking-heading { flex-wrap: wrap; }
+}
+
+.donor-search { margin: 18px 0; }
+.donor-search .donor-search-field { display:block; margin:0 0 7px; color:var(--donor-ink); }
+.donor-search-input { display:flex; align-items:center; gap:10px; padding:0 11px; background:#fff; border:1px solid #cdb8be; border-radius:9px; color:var(--donor-wine-dark); }
+.donor-search-input:focus-within { outline:2px solid var(--donor-wine); outline-offset:2px; }
+.donor-hub .donor-search-input input[type="search"] { flex:1; width:100%; min-width:0; min-height:46px; margin:0; padding:8px 0; border:0; box-shadow:none; outline:0; background:transparent; }
+.donor-search-input input::-webkit-search-cancel-button { display:none; }
+.donor-search-input button { flex:none; width:34px; height:34px; padding:0; border:0; background:transparent; color:var(--donor-wine-dark); cursor:pointer; font-size:22px; }
+.donor-search-input button:hover { border-radius:5px; background:var(--donor-soft); }
+.donor-booking-heading { padding-bottom:6px; border-bottom:1px solid var(--donor-line); }
+.donor-day span, .donor-day small { font-size:.86rem; }

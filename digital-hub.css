@@ -1,0 +1,346 @@
+.digital-hub {
+  --digital-paper: #f1f7f4;
+  --digital-ink: #172f2c;
+  --digital-teal: #155a54;
+  --digital-line: #b9ccc3;
+  color: var(--digital-ink);
+  background: var(--digital-paper);
+  font-size: 17px;
+}
+
+.digital-hub h1,
+.digital-hub h2,
+.digital-hub h3 {
+  color: var(--digital-ink);
+}
+
+.digital-hero {
+  background: #deeee7;
+}
+
+.digital-hero .wrap {
+  position: relative;
+  padding-block: 1.5rem 3.2rem;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.digital-hero .wrap::after {
+  position: absolute;
+  z-index: -1;
+  top: -60%;
+  right: 5%;
+  width: min(34vw, 500px);
+  aspect-ratio: 1;
+  border: 2px solid #b6d6c9;
+  border-radius: 50%;
+  box-shadow: 0 0 0 32px #d5e9df, 0 0 0 55px #cfe5db, 0 0 0 77px #e5f2e9;
+  content: "";
+  pointer-events: none;
+}
+
+.digital-hero h1 {
+  margin: .65rem 0 .35rem;
+  font-size: clamp(2rem, 4.5vw, 4.1rem);
+  letter-spacing: -.055em;
+  line-height: 1.05;
+}
+
+.digital-hero p {
+  max-width: 38ch;
+  margin: 0 0 1.3rem;
+  color: #284b43;
+  font-size: 1.23rem;
+  line-height: 1.48;
+}
+
+.digital-hero-links,
+.digital-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+}
+
+.digital-hub .button {
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: .98rem;
+}
+
+.digital-hub .button.primary {
+  background: var(--digital-teal);
+  border-color: var(--digital-teal);
+  color: white;
+}
+
+.digital-hub .button.primary:hover {
+  background: #114741;
+  border-color: #114741;
+}
+
+.digital-hub .button.secondary {
+  border: 1px solid var(--digital-line);
+  background: #fff;
+  color: var(--digital-teal);
+}
+
+.digital-hub .button.secondary:hover {
+  border-color: var(--digital-teal);
+}
+
+.digital-hub :is(a,button,input,select,summary):focus-visible,
+.digital-account a:focus-visible {
+  outline: 3px solid #9c531a;
+  outline-offset: 3px;
+}
+
+.digital-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(290px, 1fr);
+  align-items: start;
+  gap: clamp(1rem, 3.2vw, 3.2rem);
+  padding-block: 2.5rem 4rem;
+}
+
+.digital-layout h2 {
+  margin: 0 0 .85rem;
+  font-size: clamp(1.45rem, 2.3vw, 2.12rem);
+  line-height: 1.12;
+  letter-spacing: -.027em;
+}
+
+.digital-search {
+  display: grid;
+  gap: .4rem;
+}
+
+.digital-search label,
+#digital-request-form label {
+  font-weight: 650;
+}
+
+.digital-search > div {
+  display: flex;
+  align-items: stretch;
+  gap: .45rem;
+}
+
+.digital-search input,
+#digital-request-form select {
+  min-width: 0;
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--digital-line);
+  border-radius: 8px;
+  color: var(--digital-ink);
+  background: #fff;
+  padding: .55rem .75rem;
+  font: inherit;
+}
+
+.digital-filters {
+  margin: .85rem 0;
+}
+
+.digital-filters button {
+  min-height: 42px;
+  padding: .35rem .62rem;
+  border: 1px solid var(--digital-line);
+  border-radius: 6px;
+  background: transparent;
+  color: #284b43;
+  font: inherit;
+  cursor: pointer;
+}
+
+.digital-filters button[aria-pressed="true"] {
+  border-color: var(--digital-teal);
+  background: #d7ece1;
+  color: #143e35;
+  font-weight: 650;
+}
+
+.digital-lessons,
+.digital-tickets,
+.digital-account ul {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.digital-lessons > li {
+  border-top: 1px solid var(--digital-line);
+}
+
+.digital-lessons > li:last-child {
+  border-bottom: 1px solid var(--digital-line);
+}
+
+.digital-lessons details[open] {
+  background: #e7f2ee;
+}
+
+.digital-lessons summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem .9rem;
+  list-style: none;
+  cursor: pointer;
+}
+
+.digital-lessons summary::-webkit-details-marker {
+  display: none;
+}
+
+.digital-lessons summary::after {
+  flex: 0 0 32px;
+  color: var(--digital-teal);
+  text-align: center;
+  font-size: 1.5rem;
+  content: "+";
+}
+
+.digital-lessons details[open] summary::after {
+  content: "−";
+}
+
+.digital-lessons summary:hover {
+  background: #e3efe9;
+}
+
+.digital-lessons summary small,
+.digital-lessons summary strong {
+  display: block;
+}
+
+.digital-lessons summary small {
+  margin-bottom: .1rem;
+  color: #405e53;
+  font-size: .83rem;
+}
+
+.digital-lessons summary strong {
+  font-size: 1.09rem;
+}
+
+.digital-lessons ol {
+  margin: 0 1rem 0 .85rem;
+  padding: .15rem 0 1rem 1.5rem;
+  line-height: 1.58;
+}
+
+.digital-lessons ol li + li {
+  margin-top: .42rem;
+}
+
+.digital-desk {
+  scroll-margin-top: 1.4rem;
+  border: 1px solid var(--digital-line);
+  border-top: 4px solid var(--digital-teal);
+  border-radius: 10px;
+  padding: clamp(1rem, 2.4vw, 1.65rem);
+  background: #fcfdfb;
+}
+
+.digital-desk h3 {
+  margin: 1.1rem 0 .4rem;
+  font-size: 1.13rem;
+}
+
+.digital-desk p {
+  margin: .55rem 0;
+  line-height: 1.42;
+}
+
+.digital-desk .digital-demo {
+  padding-bottom: .65rem;
+  border-bottom: 1px solid #d9e5df;
+  color: #3e5e54;
+  font-size: .89rem;
+}
+
+.digital-feedback {
+  padding: .55rem .65rem;
+  border-left: 3px solid var(--digital-teal);
+  background: #e5f0ea;
+}
+
+#digital-request-form {
+  display: grid;
+  gap: .45rem;
+  margin-top: .7rem;
+}
+
+#digital-request-form .button {
+  justify-self: start;
+}
+
+.digital-ticket,
+.digital-account li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .55rem;
+  padding: .68rem 0;
+  border-bottom: 1px solid #d9e5df;
+}
+
+.digital-ticket div {
+  display: grid;
+  justify-items: start;
+  gap: .25rem;
+}
+
+.digital-status {
+  display: inline-flex;
+  align-items: center;
+  padding: .18rem .5rem;
+  border-radius: 4px;
+  color: #183f4f;
+  background: #e3eef6;
+  font-size: .81rem;
+  font-weight: 650;
+}
+
+.digital-status[data-status="claimed"] {
+  color: #633d13;
+  background: #f7ebd4;
+}
+
+.digital-status[data-status="resolved"] {
+  color: #285342;
+  background: #e2f0e8;
+}
+
+.digital-status[data-status="cancelled"] {
+  color: #663a3d;
+  background: #f4e9ea;
+}
+
+.digital-history-link {
+  display: inline-block;
+  margin-top: .8rem;
+  color: #155a54;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: .17em;
+}
+
+.digital-account {
+  padding: 1rem 0;
+  scroll-margin-top: 1.4rem;
+}
+
+.digital-account li p {
+  margin: .2rem 0 0;
+  color: #41554d;
+}
+
+@media (max-width: 700px) {
+  .digital-layout { grid-template-columns: 1fr; }
+  .digital-hero .wrap::after { display: none; }
+}

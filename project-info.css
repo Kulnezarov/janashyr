@@ -1,0 +1,74 @@
+.project-info {
+  --info-ink:#302944;
+  --info-muted:#5c526e;
+  --info-accent:#69458a;
+  --info-border:#e2d8ec;
+  background:#f8f5fb;
+  color:var(--info-ink);
+  padding:25px 0 64px;
+}
+.project-info-wrap { width:min(1260px, calc(100% - 96px)); }
+.project-info-crumb { display:flex; align-items:center; gap:9px; margin-bottom:15px; color:var(--info-muted); font-size:.88rem; }
+.project-info-crumb a { color:var(--info-accent); }
+.project-info-hero {
+  display:flex;
+  min-height:390px;
+  align-items:center;
+  overflow:hidden;
+  padding:clamp(30px, 6vw, 78px);
+  border-radius:12px 34px 34px 12px;
+  background:linear-gradient(90deg,#211830 0%,#211830f0 30%,#21183030 70%),url('assets/volunteer-evening.webp') 60% 52% / cover;
+  color:#fff9fc;
+}
+.project-info-about .project-info-hero {
+  background:linear-gradient(90deg,#211830 0%,#211830ed 37%,#21183030 85%),url('assets/hero-kazakhstan.png') 60% 48% / cover;
+}
+.project-info-intro { max-width:55ch; }
+.project-info-intro h1 { margin:0 0 12px; color:#fff; font-size:clamp(40px,6vw,79px); letter-spacing:-.06em; line-height:1; }
+.project-info-intro p { margin:7px 0 0; color:#fff8fe; line-height:1.5; }
+.project-info-intro .project-info-lead { font-size:clamp(20px,2.5vw,31px); font-weight:750; color:#f6defd; }
+.project-info .project-info-anchor { display:inline-flex; margin-top:18px; border-radius:7px; border:0; background:#f8e8fd; color:#372345; }
+.project-info .project-info-anchor:hover { background:#ead7f2; }
+.project-info-content { margin-top:32px; scroll-margin-top:25px; }
+.project-info-content h2, .project-info-how h2 { margin:0 0 10px; color:var(--info-ink); font-size:clamp(23px,3vw,35px); }
+.project-info-paths { border-top:1px solid var(--info-border); }
+.project-info-path {
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) minmax(190px, 240px);
+  align-items:center;
+  gap:14px;
+  padding:18px 0;
+  border-bottom:1px solid var(--info-border);
+}
+.project-info-path h3 { margin:0 0 4px; color:var(--info-ink); }
+.project-info-path p { margin:0; color:var(--info-muted); }
+.project-info-path a { justify-self:end; color:var(--info-accent); text-underline-offset:3px; font-weight:700; text-align:right; }
+.project-info-path a:hover { text-decoration:underline; }
+.project-info-checklist, .project-info-how { margin-top:24px; padding:20px 22px; border:1px solid var(--info-border); border-radius:9px; background:#f1e9f7; color:var(--info-ink); }
+.project-info-checklist summary { cursor:pointer; font-size:1.05rem; font-weight:750; }
+.project-info-checklist ol { margin:12px 0 0; padding-left:22px; }
+.project-info-checklist li { margin:6px 0; }
+.project-info-how ol { display:grid; grid-template-columns:repeat(3, 1fr); align-items:start; gap:20px; margin:0; padding-left:20px; }
+.project-info-how li { padding:4px 8px 4px 0; }
+.project-info-how li p { margin:4px 0 0; color:var(--info-muted); }
+.project-info-notice { margin:14px 0 0; color:var(--info-muted); font-size:.88rem; line-height:1.5; }
+@media (max-width:700px) {
+  .project-info-wrap { width:calc(100% - 36px); }
+  .project-info-path { grid-template-columns:1fr; }
+  .project-info-path a { grid-column:1; justify-self:start; text-align:left; }
+  .project-info-how ol { grid-template-columns:1fr; gap:2px; }
+}
+
+/* Full-bleed editorial covers aligned with the psychology page. */
+.project-info { padding-top:0; }
+.project-info-hero { display:block; min-height:0; padding:0; border-radius:0; }
+.project-info-hero-shell {
+  position:relative;
+  display:flex;
+  align-items:center;
+  min-height:clamp(380px,42vw,580px);
+  padding-block:66px 42px;
+}
+.project-info-hero .project-info-crumb { position:absolute; top:19px; left:0; margin:0; color:#f8eafa; }
+.project-info-hero .project-info-crumb a { color:#fff; text-decoration:underline; text-underline-offset:3px; }
+.project-info .project-info-intro h1 { line-height:1.05; }

@@ -1,0 +1,181 @@
+import {sitePath} from './ui.js';
+import {escapeText} from './profiles.js';
+import {psychAvailability} from './support.js';
+import {donorAvailability} from './donor.js';
+
+const lifetime=4*60*60*1000;
+const key='janashyr.chat.current';
+const parks=[
+  {lat:42.32541,lon:69.58573,label:['Абай саябағы','Парк Абая']},
+  {lat:42.31653,lon:69.60022,label:['Орталық саябақ','Центральный парк']},
+  {lat:42.36861,lon:69.62309,label:['Дендросаябақ','Дендропарк']},
+  {lat:42.30970,lon:69.63020,label:['Жеңіс саябағы','Парк Победы']}
+];
+const copy={
+  kk:{title:'JANASHYR AI',open:'Чатты ашу',close:'Жабу',hello:'Сәлем! Сізге қандай көмек керек?',prompts:['Қан тапсырғым келеді','Жақын саябаққа маршрут','Сөйлескім келеді','Психологқа жазылу'],message:'Сұрағыңызды жазыңыз',send:'Жіберу',notice:'JANASHYR AI қателесуі мүмкін',expiry:'Чат 4 сағат сақталады',clear:'Диалогты тазарту',clearShort:'Тазарту',messageHint:'Сұрағыңыз',demo:'Демо көмекші',donor:'Бұл — Шымкенттегі демо кесте.',donorLink:'Жазылуға өту',psych:'Демо мамандардың келесі бос уақыттары.',psychLink:'Жазылуға өту',support:'Сізді тыңдауға дайынмын. Қазір сізге не қиын болып жүр? Қаласаңыз, бір сөйлемнен бастаңыз.',follow:'Жазғаныңызға рақмет. Қазір сізге көбірек не көмектесер еді: жай сөйлесу ме, әлде маман таңдау ма?',danger:'Егер өзіңізге не басқа адамға қазір қауіп төніп тұрса, жергілікті жедел қызметке хабарласыңыз және сенімді адамға айтыңыз.',route:'Шымкенттегі тізімнен ең жақын саябақты таңдау үшін геолокация қажет. Сыртқы карта арбаға арналған бағытты есептейді. Координаттар сілтемені ашқанда беріледі. Нақты қолжетімділік карта деректеріне байланысты.',locate:'Орналасқан жерімді анықтау',example:'Қала орталығынан мысал көрсету',exampleStatus:'Бұл — Шымкент орталығынан мысал. Орналасқан жеріңіз пайдаланылмайды.',locationFail:'Орналасқан жер анықталмады. Саябақты картадан өзіңіз таңдай аласыз.',outside:'Орналасқан жер Шымкенттен тыс. Алдымен қала картасын ашыңыз.',map:'Үлкен картаны ашу',sample:'Қолжетімді маршрут демосы',waiting:'Орналасқан жер анықталуда…',fallback:'Қан тапсыру, психологтың бос уақыттары, эмоционалдық қолдау немесе Шымкенттегі саябақ маршруты бойынша көмектесе аламын.'},
+  ru:{title:'JANASHYR AI',open:'Открыть чат',close:'Закрыть',hello:'Привет! Чем могу помочь?',prompts:['Хочу сдать кровь','Маршрут до ближайшего парка','Хочу поговорить','Записаться к психологу'],message:'Напишите свой вопрос',send:'Отправить',notice:'JANASHYR AI может ошибаться',expiry:'Чат сохраняется четыре часа',clear:'Очистить диалог',clearShort:'Очистить',messageHint:'Напишите вопрос',demo:'Демо-помощник',donor:'Это демонстрационные слоты в Шымкенте.',donorLink:'Перейти к записи',psych:'Ближайшие свободные окна демо-специалистов.',psychLink:'Перейти к записи',support:'Я готов вас выслушать. Что сейчас даётся труднее всего? Можно начать с одного предложения.',follow:'Спасибо, что поделились. Что сейчас помогло бы больше: просто поговорить или посмотреть, к какому специалисту можно обратиться?',danger:'Если вам или другому человеку сейчас угрожает опасность, обратитесь в местную экстренную службу и сообщите человеку, которому доверяете.',route:'Для выбора ближайшего парка из подборки Шымкента нужна геолокация. Внешняя карта построит маршрут с профилем для коляски. Координаты передаются ей при открытии ссылки. Доступность на месте зависит от данных карты.',locate:'Разрешить геолокацию',example:'Показать пример от центра',exampleStatus:'Это пример от центра Шымкента. Он не использует ваше местоположение.',locationFail:'Геолокация недоступна. Парк можно выбрать на карте вручную.',outside:'Вы находитесь за пределами Шымкента. Откройте карту города, чтобы посмотреть парки.',map:'Открыть большую карту',sample:'Демо доступного маршрута',waiting:'Определяем местоположение…',fallback:'Могу подсказать, где сдать кровь, показать время психологов, предложить эмоциональную поддержку или найти парк в Шымкенте.'}
+};
+const shortPrompts={
+  kk:['Қан тапсыру','Саябақ','Сөйлесу','Психолог'],
+  ru:['Сдать кровь','До парка','Поговорить','К психологу']
+};
+let opened=false, timer=null, route=null, locationState='', draft='';
+let memory=null, locationRequest=0;
+
+function readChat(){
+  try { const raw=globalThis.sessionStorage?.getItem(key); if(raw)memory=JSON.parse(raw); } catch {}
+  if(memory && memory.expires<=Date.now())saveChat(null);
+  return memory;
+}
+function saveChat(data){
+  memory=data;
+  try{
+    if(data)globalThis.sessionStorage?.setItem(key,JSON.stringify(data));
+    else globalThis.sessionStorage?.removeItem(key);
+  }catch{}
+}
+function schedule(render){
+  clearTimeout(timer);
+  const chat=readChat();
+  if(!chat)return;
+  timer=setTimeout(()=>{
+    saveChat(null);route=null;locationState='';
+    if(document.querySelector('.home-chat-panel'))render();
+  },Math.max(0,chat.expires-Date.now()));
+}
+export function resetHomeChat(){
+  opened=false;draft='';route=null;locationState='';locationRequest++;clearTimeout(timer);saveChat(null);
+}
+const classify=(input,last)=>{
+  if(/не хочу жить|убить себя|суицид|покончить с собой|навредить себе|хочу умереть|өзіме зиян|өлгім кел|өзімді өлтір/i.test(input))return 'danger';
+  if(/донор|сдать кровь|кровь|қан тап|қан бер/i.test(input))return 'donor';
+  if(/маршрут|парк|коляск|саябақ|арба|бағыт/i.test(input))return 'route';
+  if(/психолог|психотерапевт|маман|кеңеске/i.test(input))return 'psych';
+  if(/стресс|тревог|тяжело|устал|одинок|поговор|сөйлес|қинал|мазасыз|жалғыз/i.test(input))return 'support';
+  return ['support','follow','danger'].includes(last)?'follow':'fallback';
+};
+function send(input,render,fromPrompt=false){
+  const message=String(input??'').trim().slice(0,500);
+  if(!message)return;
+  draft='';
+  const current=readChat()||{expires:Date.now()+lifetime,turns:[]};
+  const kind=classify(message,current.turns.at(-1)?.kind);
+  current.turns.push({message,kind});current.turns=current.turns.slice(-24);
+  saveChat(current);schedule(render);render();
+  const target=fromPrompt && window.matchMedia('(pointer: coarse)').matches?'.home-chat-log':'#home-chat-input';
+  document.querySelector(target)?.focus({preventScroll:true});
+}
+const external=(url,label)=>`<a href="${escapeText(url)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+function renderReply(kind,lang,w){
+  const inner=(href,label)=>`<a href="${href}" data-link>${label}</a>`;
+  if(kind==='donor'||kind==='psych'){
+    const raw=kind==='donor'?donorAvailability(lang):psychAvailability(lang);
+    const slots=(Array.isArray(raw)?raw:String(raw??'').split('\n')).filter(Boolean);
+    const href=kind==='donor'?'/directions/donation#donor-booking':'/directions/support/psychology#psych-clinicians';
+    const label=kind==='donor'?w.donorLink:w.psychLink;
+    return `<p>${w[kind]}</p>${slots.length?`<ul class="home-chat-slots">${slots.map(slot=>`<li>${escapeText(slot)}</li>`).join('')}</ul>`:''}<a class="home-chat-result-link" href="${href}" data-link>${label}</a>`;
+  }
+  if(kind==='route'){
+    const fallback='https://www.openstreetmap.org/#map=13/42.341/69.612';
+    const map=route
+      ? external(route.url,route.name[lang==='kk'?0:1]+' · '+w.map)
+      : external(fallback,w.map);
+    return `<p>${w.route}</p><p>${locationState?escapeText(w[locationState]):''}</p>
+      <div class="home-chat-reply-links"><button type="button" class="button secondary" data-action="home-ai-locate" ${locationState==='waiting'?'disabled':''}>${w.locate}</button><button type="button" class="text-button" data-action="home-ai-route-example">${w.example}</button>${map}${inner('/directions/accessibility/map',w.sample)}</div>`;
+  }
+  return `<p>${w[kind]||w.fallback}</p>`;
+}
+export function renderHomeChat(lang){
+  const w=copy[lang], chat=readChat(), turns=chat?.turns||[];
+  const hasMessages=turns.length>0;
+  return `<div class="home-chat-widget${opened?' is-open':''}">
+    ${opened?`<section class="home-chat-panel" id="home-chat-panel" role="dialog" aria-modal="true" aria-labelledby="home-chat-title">
+      <header><div class="home-chat-identity"><img src="/assets/care-logo.png" alt="" width="35" height="35"><div><h2 id="home-chat-title">${w.title}</h2><p>${w.demo}</p></div></div><div><button class="text-button" type="button" data-action="home-ai-clear" ${hasMessages||draft?'':'hidden'} aria-label="${w.clear}"><span class="chat-clear-full">${w.clear}</span><span class="chat-clear-short">${w.clearShort}</span></button><button class="home-chat-close" type="button" data-action="home-ai-toggle" aria-label="${w.close}">×</button></div></header>
+      <div class="home-chat-log${hasMessages?'':' is-empty'}" role="log" aria-live="polite" tabindex="0">${hasMessages?'':`<p class="home-chat-greeting">${w.hello}</p>`}
+      ${turns.map(({message,kind},index)=>`<article class="home-chat-turn"><p class="home-chat-user">${escapeText(message)}</p><div class="home-chat-reply">${kind==='route' && index!==chat.turns.findLastIndex(t=>t.kind==='route')?`<p>${w.route}</p>`:renderReply(kind,lang,w)}</div></article>`).join('')}</div>
+      ${hasMessages?'':`<div class="home-chat-prompts" ${draft.trim()?'hidden':''}>${w.prompts.map((prompt,i)=>`<button type="button" data-action="home-ai-prompt" data-id="${i}" aria-label="${prompt}">${shortPrompts[lang][i]}</button>`).join('')}</div>`}
+      <form id="home-ai-form"><label class="home-chat-input-label" for="home-chat-input">${w.message}</label><input id="home-chat-input" name="message" value="${escapeText(draft)}" placeholder="${w.messageHint}" required maxlength="500" autocomplete="off" enterkeyhint="send"><button type="submit" class="button primary home-chat-send" aria-label="${w.send}" ${draft.trim()?'':'disabled'}><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></button></form>
+      <p class="home-chat-note">${w.notice} <span aria-hidden="true">·</span> ${w.expiry}</p>
+    </section>`:''}
+    <button class="home-chat-launcher ${opened?'is-open':''}" type="button" data-action="home-ai-toggle" aria-label="${opened?w.close:w.open}" aria-expanded="${opened}" ${opened?'aria-controls="home-chat-panel"':''}>
+      <svg width="27" height="27" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5h16v12H9l-5 3V5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 10h8m-8 3h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </div>`;
+}
+function parkRoute(lat,lon){
+  const distance=p=>((p.lat-lat)**2)+(((p.lon-lon)*Math.cos(lat*Math.PI/180))**2);
+  const park=[...parks].sort((a,b)=>distance(a)-distance(b))[0];
+  const url=new URL('https://classic-maps.openrouteservice.org/directions');
+  url.searchParams.set('a',[lat.toFixed(5),lon.toFixed(5),park.lat,park.lon].join(','));
+  url.searchParams.set('b','3');
+  url.searchParams.set('c','0');
+  url.searchParams.set('k2','km');
+  return {name:park.label,url:url.href};
+}
+export function homeChatAction(action,id,lang,render){
+  if(action==='home-ai-toggle'){
+    opened=!opened;schedule(render);render();
+    if(opened){
+      const target=window.matchMedia('(pointer: coarse)').matches?'[data-action="home-ai-toggle"].home-chat-close':'#home-chat-input';
+      document.querySelector(target)?.focus({preventScroll:true});
+    }
+    else document.querySelector('.home-chat-launcher')?.focus({preventScroll:true});
+    return true;
+  }
+  if(action==='home-ai-clear'){
+    draft='';clearTimeout(timer);saveChat(null);route=null;locationState='';locationRequest++;render();
+    const target=window.matchMedia('(pointer: coarse)').matches?'.home-chat-close':'#home-chat-input';
+    document.querySelector(target)?.focus({preventScroll:true});
+    return true;
+  }
+  if(action==='home-ai-prompt'){
+    send(copy[lang].prompts[Number(id)],render,true);return true;
+  }
+  if(action==='home-ai-route-example'){
+    locationRequest++;
+    route=parkRoute(42.3186,69.5977);
+    locationState='exampleStatus';
+    render();
+    return true;
+  }
+  if(action==='home-ai-locate'){
+    const request=++locationRequest;
+    locationState='waiting';route=null;
+    const finish=next=>{
+      if(request!==locationRequest || locationState!=='waiting')return;
+      locationState=next;
+      if(opened && sitePath()==='/')render();
+    };
+    if(!navigator.geolocation){finish('locationFail');return true}
+    navigator.geolocation.getCurrentPosition(({coords})=>{
+      if(request!==locationRequest || locationState!=='waiting')return;
+      const {latitude:lat,longitude:lon}=coords;
+      if(lat<42.17||lat>42.53||lon<69.35||lon>69.87){finish('outside');return}
+      route=parkRoute(lat,lon);
+      finish('');
+    },()=>finish('locationFail'),{timeout:8000});
+    render();
+    return true;
+  }
+  return false;
+}
+export function homeChatSubmit(form,render){send(new FormData(form).get('message'),render)}
+
+export function homeChatInput(input){
+  if(input.id!=='home-chat-input')return false;
+  draft=input.value;
+  const panel=input.closest('.home-chat-panel');
+  const prompts=panel.querySelector('.home-chat-prompts');
+  if(prompts)prompts.hidden=Boolean(draft.trim());
+  panel.querySelector('.home-chat-send').disabled=!draft.trim();
+  panel.querySelector('[data-action="home-ai-clear"]').hidden=!draft && !readChat()?.turns.length;
+  return true;
+}
+
+export function fitHomeChat(){
+  const viewport=window.visualViewport;
+  const panel=document.querySelector('.home-chat-widget.is-open');
+  if(!panel || !viewport)return;
+  panel.style.setProperty('--chat-viewport-height',viewport.height+'px');
+  panel.style.setProperty('--chat-bottom-inset',Math.max(0,window.innerHeight-viewport.height-viewport.offsetTop)+'px');
+}
