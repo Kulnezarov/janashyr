@@ -623,13 +623,21 @@ form:has(select[name="format"] option[value="local"]:checked) .help-location { d
 .site .header { background: transparent; border-bottom: 0; }
 .site .header .languages-mobile { display: none; }
 .site.header-over-cover .header { position: absolute; inset: 0 0 auto; z-index: 30; }
+.site.header-over-cover .header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -32px;
+  z-index: -1;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  mask-image: linear-gradient(to bottom, #000 50%, transparent);
+}
 .site.header-over-cover:not(.header-light-cover) .header {
   --cover-nav-ink: #fff;
-  box-shadow: inset 0 60px 55px -50px #201626d9;
 }
 .site.header-light-cover .header {
   --cover-nav-ink: #29232c;
-  box-shadow: inset 0 60px 55px -50px #fff4e4e6;
 }
 .site.header-over-cover .header :is(.brand,.main-nav>a,.services-trigger,.languages button,.language-separator) {
   color: var(--cover-nav-ink);
@@ -894,12 +902,6 @@ form:has(select[name="format"] option[value="local"]:checked) .help-location { d
   place-items: center;
 }
 .site .header .languages-mobile button { min-inline-size: 44px; }
-.site.header-over-cover:not(.header-light-cover) .header {
-  background: #302536;
-}
-.site.header-light-cover .header {
-  background: #fff5ea;
-}
 .site.header-light-cover .header .main-nav > a:is(:hover,:focus-visible,.nav-active),
 .site.header-light-cover .header .services-trigger:is(:hover,:focus-visible,.nav-active),
 .site.header-light-cover .header .languages button[aria-pressed="true"] {
