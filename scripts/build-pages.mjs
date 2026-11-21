@@ -1,4 +1,4 @@
-import {copyFile, mkdir, readFile, readdir, writeFile} from 'node:fs/promises';
+import {copyFile, mkdir, readFile, readdir, rm, writeFile} from 'node:fs/promises';
 import {resolve, join} from 'node:path';
 import {courses} from '../support-content.js';
 import {cities} from '../donor-content.js';
@@ -28,10 +28,16 @@ const html = template.replace(/((?:href|src)=")\/(?!\/)/g,(_,attribute)=>attribu
 await mkdir(join(output,'assets'),{recursive:true});
 const sources = (await readdir(root)).filter(name =>
   name.endsWith('.css') || (name.endsWith('.js') && !name.endsWith('.test.js') && name!=='server.js'));
-const assets = await readdir(join(root,'assets'));
+const assetReferences = new Set(
+  (await Promise.all(sources.map(name=>readFile(join(root,name),'utf8'))))
+    .concat(template).flatMap(source=>Array.from(source.matchAll(/\bassets\/([\w.-]+)/g), match=>match[1]))
+);
+const assetFiles=(await readdir(join(root,'assets'),{withFileTypes:true})).filter(entry=>entry.isFile()).map(entry=>entry.name);
+const assets=assetFiles.filter(name=>assetReferences.has(name));
 await Promise.all([
   ...sources.map(name=>copyFile(join(root,name),join(output,name))),
   ...assets.map(name=>copyFile(join(root,'assets',name),join(output,'assets',name))),
+  ...assetFiles.filter(name=>!assetReferences.has(name)).map(name=>rm(join(output,'assets',name),{force:true})),
   ...routes.map(async route=>{
     const directory=join(output,route);
     await mkdir(directory,{recursive:true});

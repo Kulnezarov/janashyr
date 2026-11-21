@@ -1,20 +1,112 @@
 import {scheduleDate} from './ui.js';
-const prefix = 'janashyr.demo.v2.';
+const projectPrefix = 'janashyr.';
+const prefix = projectPrefix + 'demo.v2.';
 const fallback = new Map();
 
+export function resetDemoStorage() {
+  const stores = [];
+  try {
+    for (const name of ['localStorage','sessionStorage']) {
+      const storage = globalThis[name];
+      const keys = Array.from({length:storage.length}, (_, index) => storage.key(index));
+      stores.push({storage,keys:keys.filter(key => key?.startsWith(projectPrefix))});
+    }
+  } catch {
+    return false;
+  }
+  let succeeded = true;
+  for (const {storage,keys} of stores) {
+    for (const key of keys) {
+      try { storage.removeItem(key); }
+      catch { succeeded = false; }
+    }
+  }
+  if (succeeded) fallback.clear();
+  return succeeded;
+}
+
+export const demoResetText = {
+  kk:{title:'Демо деректерді қалпына келтіру',confirm:'Демо деректерді өшіру',cancel:'Бас тарту',
+    warning:'Осы браузердегі JANASHYR профильдері, жазбалар, белгілер және осы қойындыдағы чат өшіріледі. Бастапқы демо деректер қайта көрсетіледі.',
+    done:'Демо деректер қалпына келтірілді. Бастау үшін дайын профильді таңдаңыз.',
+    failed:'Барлық демо деректер өшірілмеді. Браузер қоймасына рұқсатты тексеріп, қайта көріңіз.'},
+  ru:{title:'Сбросить демо-данные',confirm:'Сбросить данные',cancel:'Отмена',
+    warning:'Профили, записи и метки JANASHYR в этом браузере, а также чат этой вкладки будут удалены. Снова появятся стартовые демо-данные.',
+    done:'Демо-данные сброшены. Чтобы начать, выберите готовый профиль.',
+    failed:'Удалось удалить не все демо-данные. Проверьте доступ к хранилищу браузера и повторите.'}
+};
+
+export function renderDemoReset(lang) {
+  const w=demoResetText[lang];
+  return `<dialog id="demo-reset-dialog" class="panel booking-profile-dialog" aria-labelledby="demo-reset-title" aria-describedby="demo-reset-warning">
+    <h2 id="demo-reset-title">${w.title}</h2><p id="demo-reset-warning">${w.warning}</p>
+    <div class="profile-toolbar"><button type="button" class="button secondary" data-action="demo-reset-close" autofocus>${w.cancel}</button>
+      <button type="button" class="button primary" data-action="demo-reset-confirm">${w.confirm}</button></div>
+  </dialog>`;
+}
+
 export function readLocal(key, initial = null) {
+  if (fallback.has(key)) return structuredClone(fallback.get(key));
   try {
     const data = globalThis.localStorage?.getItem(prefix + key);
     if (data !== null && data !== undefined) return JSON.parse(data);
   } catch {}
-  return fallback.has(key) ? JSON.parse(fallback.get(key)) : initial;
+  return initial;
 }
 
 export function writeLocal(key, value) {
-  const data = JSON.stringify(value);
-  fallback.set(key, data);
-  try { globalThis.localStorage?.setItem(prefix + key, data); } catch {}
+  if (writeStored(prefix + key, value)) {
+    fallback.delete(key);
+    return true;
+  }
+  fallback.set(key, structuredClone(value));
+  return false;
 }
+
+export function writeStored(key, value) {
+  try {
+    globalThis.localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function readStoredList(key, valid = () => true) {
+  try {
+    const raw = globalThis.localStorage.getItem(key);
+    if (raw == null) return {rows:[], issue:''};
+    const value = JSON.parse(raw);
+    if (Array.isArray(value)) {
+      const rows = value.filter(valid);
+      return {rows, issue:rows.length === value.length ? '' : 'damaged'};
+    }
+  } catch (error) {
+    if (!(error instanceof SyntaxError)) return {rows:[], issue:'unavailable'};
+  }
+  return {rows:[], issue:'damaged'};
+}
+
+export const readLocalList = (key, valid) => readStoredList(prefix + key, valid);
+export const writeLocalList = (key, rows) => writeStored(prefix + key, rows);
+
+export function readLocalObject(key) {
+  try {
+    const raw=globalThis.localStorage.getItem(prefix+key);
+    if(raw==null)return {value:{},issue:''};
+    const value=JSON.parse(raw);
+    if(value && typeof value==='object' && !Array.isArray(value))return {value,issue:''};
+  } catch(error) {
+    if(!(error instanceof SyntaxError))return {value:{},issue:'unavailable'};
+  }
+  return {value:{},issue:'damaged'};
+}
+export const writeLocalObject = (key,value) => writeStored(prefix+key,value);
+
+export const storageText = {
+  kk:{damaged:'Бүлінген деректер еленбеді. Сақтау жұмыс істесе, жазбаны қайта жасауға болады.', unavailable:'Браузер қоймасы қолжетімсіз. Сақталған жазбалар көрсетілмейді.', saveFailed:'Жазбаны сақтау мүмкін болмады. Браузер қоймасын тексеріп, қайталап көріңіз.'},
+  ru:{damaged:'Повреждённые данные пропущены. Если хранилище доступно, запись можно создать заново.', unavailable:'Хранилище браузера недоступно. Сохранённые записи не отображаются.', saveFailed:'Не удалось сохранить запись. Проверьте настройки хранилища браузера и повторите попытку.'}
+};
 
 export const escapeText = value => String(value ?? '').replace(/[&<>"']/g, c => ({
   '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
@@ -29,13 +121,22 @@ const roles = {
   helper: ['Цифрлық көмекші','Помощник пожилых','Цифрлық сұрауларға жауап беріңіз.','Помогайте разобраться с цифровыми вопросами.','/directions/support/digital']
 };
 const demos = Object.keys(roles).map(role => ({id:'preview-'+role,alias:'',role,demo:true}));
+demos.push(
+  {id:'preview-lesson-samal',alias:'Самал',role:'teacher',demo:true},
+  {id:'preview-lesson-lira',alias:'Лира',role:'teacher',demo:true}
+);
 const words = {
   kk:{ login:'Демонстрациялық кіру', intro:'Осы браузерде қолданылатын профильді таңдаңыз немесе жаңасын жасаңыз.', presets:'Дайын демо аккаунттар', create:'Аккаунт жасау', alias:'Лақап ат', aliasHint:'Нақты аты-жөніңізді жазбаңыз', role:'Рөл', mine:'Жеке кабинет', profile:'Профиль', history:'Әрекеттер тарихы', signout:'Профильден шығу', change:'Басқа профиль', open:'Бөлімді ашу', local:'Профильдер мен демо тарих осы браузерде сақталады. Рөлдер сайттағы әрекеттерді көрсету үшін қолданылады.', type:'Қолжетімді әрекеттер', add:'Жаңа профиль', guests:'Әрекеттерді сақтау үшін демо профиліңізге кіріңіз.', lists:['Қолдау','Оқу','Цифрлық көмек','Донорлық','Қолжетімді орта','Қала']},
   ru:{ login:'Демонстрационный вход', intro:'Выберите готовый профиль для просмотра или создайте свой в этом браузере.', presets:'Готовые демо-аккаунты', create:'Создать аккаунт', alias:'Псевдоним', aliasHint:'Не указывайте настоящее имя', role:'Роль', mine:'Демонстрационный личный кабинет', profile:'Профиль', history:'История действий', signout:'Выйти из профиля', change:'Другой профиль', open:'Открыть раздел', local:'Профили и демо-история хранятся в этом браузере. Роли показывают доступные действия в интерфейсе.', type:'Доступные действия', add:'Новый профиль', guests:'Войдите в демо-профиль, чтобы сохранить свои действия.', lists:['Поддержка','Обучение','Цифровая помощь','Донорство','Доступная среда','Город']}
 };
 const index = lang => lang==='kk'?0:1;
-export const profileName = (profile,lang) => profile.alias || roles[profile.role][index(lang)];
-export const getProfiles = () => [...demos,...readLocal('profiles',[])];
+export const profileRoleName = (profile,lang) => roles[profile.role][index(lang)];
+export const profileName = (profile,lang) => profile.alias || profileRoleName(profile,lang);
+const validProfile = row => typeof row?.id === 'string' && Boolean(row.id) &&
+  typeof row.alias === 'string' && Object.hasOwn(roles,row.role) && !demos.some(demo=>demo.id===row.id);
+const localProfiles = () => readLocalList('profiles',validProfile);
+export const profileStorageIssue = () => localProfiles().issue;
+export const getProfiles = () => [...demos,...(fallback.get('profiles') ?? localProfiles().rows)];
 export function currentProfile() {
   const id = readLocal('active');
   return getProfiles().find(profile=>profile.id===id) || null;
@@ -50,16 +151,17 @@ export function createProfile(alias, role) {
   if(alias.length<2 || alias.length>40 || !Object.hasOwn(roles,role))return null;
   const id=globalThis.crypto?.randomUUID?.() || ('local-'+Date.now()+'-'+Math.random().toString(36).slice(2));
   const profile={id,alias,role};
-  writeLocal('profiles',[...readLocal('profiles',[]),profile]);
+  writeLocal('profiles',[...getProfiles().filter(row=>!row.demo),profile]);
   writeLocal('active',id);
   return profile;
 }
 export function signOutProfile(){writeLocal('active',null)}
 
-export function renderLogin(lang) {
+export function renderLogin(lang,wasReset=false) {
   const w=words[lang], i=index(lang);
   return `<main class="wrap inner demo-profile-page">
     <header class="profile-lead"><h1><span class="profile-title-full">${w.login}</span><span class="profile-title-short">${lang==='kk'?'Демо кіру':'Демо-вход'}</span></h1><p>${w.intro}</p></header>
+    ${wasReset?`<p class="success" role="status" id="demo-reset-success">${demoResetText[lang].done}</p>`:''}
     <div class="profile-login-layout"><section aria-labelledby="profile-picks">
       <h2 id="profile-picks">${w.presets}</h2>
       <div class="profile-picks">${getProfiles().map(p=>`<button type="button" class="profile-pick" data-action="profile-select" data-id="${p.id}">
@@ -120,7 +222,7 @@ export function renderProfile(lang,profile,hash,sections,rows=[]) {
   if(profile.role==='psychologist')names.push(['clinician',lang==='kk'?'Қабылдау кестесі':'Расписание консультаций']);
   const ids=['support-account','education-history','digital-history','donation','accessibility','profile-cleanup'];
   names.push(...ids.map((id,index)=>[id,w.lists[index]]));
-  const tab=hash==='city'?'profile-cleanup':hash;
+  const tab=hash==='city' || hash==='city-report-history'?'profile-cleanup':hash;
   const current=names.find(([id])=>id===tab)||names[0];
   const [section,label]=current;
   return `<main class="wrap inner demo-profile-page profile-dashboard">
@@ -132,7 +234,7 @@ export function renderProfile(lang,profile,hash,sections,rows=[]) {
       <div class="account-content" aria-label="${label}">
         ${section==='overview'?`<div class="profile-overview">${profileOverview(lang,rows)}</div>
         <p class="profile-local">${w.local}</p>`:sections[section]()}
-        <div class="profile-toolbar">${section==='overview'?`<a class="button primary" href="${role[4]}" data-link>${w.open}</a>`:''}<a class="button secondary" href="/login" data-link>${w.change}</a><button type="button" class="text-button" data-action="logout">${w.signout}</button></div>
+        <div class="profile-toolbar">${section==='overview'?`<a class="button primary" href="${role[4]}" data-link>${w.open}</a>`:''}<a class="button secondary" href="/login" data-link>${w.change}</a><button type="button" class="text-button" data-action="logout">${w.signout}</button><button type="button" class="text-button" data-action="demo-reset-open" aria-haspopup="dialog">${demoResetText[lang].title}</button></div>
       </div>
     </div>
   </main>`;

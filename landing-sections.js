@@ -31,6 +31,11 @@ const mapPlaces = [
 const arrow = '<svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 let mapKey='blood', origin=null, locating=false, locationError=false;
 
+export function mapEmbedUrl(lat,lon,marker=true) {
+  const bbox=[lon-.019, lat-.012, lon+.019, lat+.012].map(x=>x.toFixed(6)).join('%2C');
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&amp;layer=mapnik${marker?`&amp;marker=${lat}%2C${lon}`:''}`;
+}
+
 function mapDistance(place) {
   const radians = Math.PI / 180;
   const dLat = (place.lat - origin.latitude) * radians;
@@ -65,7 +70,6 @@ export function homeCommunity(lang) {
   const kk=lang==='kk', i=kk?0:1;
   const point=mapPlaces.find(p=>p.key===mapKey);
   const {lat,lon}=point;
-  const bbox=[lon-.019, lat-.012, lon+.019, lat+.012].map(x=>x.toFixed(6)).join('%2C');
   const sorted=origin?[...mapPlaces].sort((a,b)=>mapDistance(a)-mapDistance(b)):mapPlaces;
   const distance=origin?new Intl.NumberFormat(kk?'kk-KZ':'ru-RU',{maximumFractionDigits:1}).format(mapDistance(point))+' км':'';
   return `<div class="wrap home-community">
@@ -81,7 +85,7 @@ export function homeCommunity(lang) {
         <p class="home-map-status" role="status">${locating?(kk?'Орналасқан жеріңіз анықталуда…':'Определяем местоположение…'):locationError?(kk?'Орналасқан жерді анықтау мүмкін болмады.':'Не удалось определить местоположение.'):origin?(kk?'Көрсетілген мекемелер арақашықтық бойынша реттелді.':'Места из этой подборки отсортированы по расстоянию по прямой.'):(kk?'Картада Шымкенттегі үш мекеме көрсетілген.':'На карте показана подборка из трёх мест в Шымкенте.')}</p>
       </div>
       <div class="home-map-frame">
-        <iframe title="${c.map} — OpenStreetMap" tabindex="-1" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&amp;layer=mapnik&amp;marker=${lat}%2C${lon}"></iframe>
+        <iframe title="${c.map} — OpenStreetMap" tabindex="-1" loading="lazy" src="${mapEmbedUrl(lat,lon)}"></iframe>
         <div class="home-map-location" aria-live="polite">
           <strong>${point.names[i]}</strong><span>${point.addresses[i]}${distance?' · '+distance:''}</span>
           <a href="${point.source}" target="_blank" rel="noopener noreferrer">${kk?'Мекеме туралы':'Об организации'} ↗</a>
@@ -102,7 +106,7 @@ export function homeCommunity(lang) {
 export function siteFooter(t, lang) {
   const c = copy[lang];
   return `<footer class="site-footer" id="contacts"><div class="wrap footer-grid">
-    <div><a class="brand footer-brand" href="/" data-link><img src="/assets/care-logo.png" width="38" height="38" alt="">JANASHYR</a><p class="footer-description">${t.footer}</p></div>
+    <div><a class="brand footer-brand" href="/" data-link><img src="/assets/care-logo.webp" width="38" height="38" alt="">JANASHYR</a><p class="footer-description">${t.footer}</p></div>
     <div><h3>${c.links}</h3><ul>${t.lanes.map(lane => `<li><a href="/directions/${lane.slug}" data-link>${lane.title}</a></li>`).join('')}</ul></div>
     <div><h3>${c.platform}</h3><ul>
       <li><a href="/about" data-link>${t.about}</a></li>

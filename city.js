@@ -1,5 +1,6 @@
 import {scheduleTimestamp} from './ui.js';
-import {readLocal,writeLocal} from './profiles.js';
+import {readLocalObject,writeLocalObject} from './profiles.js';
+import {updateCity} from './city-participation.js';
 import {pageShell,demoNotice} from './ui.js';
 import {t as texts} from './city-content.js';
 const base='/directions/city';
@@ -51,10 +52,24 @@ let cityProfileId=null;
 export function useCityProfile(profile){
   endCitySession();
   cityProfileId=profile?.id || null;
-  if(cityProfileId)Object.assign(s,readLocal('city-'+cityProfileId,{}));
+  if(!cityProfileId)return;
+  const {value}=readLocalObject('city-'+cityProfileId);
+  const requiredLists={issues:['votes','history','confirm','remain'],groups:['members','comments'],events:['members','historyMembers']};
+  for(const [key,fields] of Object.entries(requiredLists)){
+    if(Array.isArray(value[key]))s[key]=value[key].filter(row=>row && Number.isSafeInteger(row.id)).map(row=>{
+      const lists=Object.fromEntries(fields.map(field=>[field,Array.isArray(row[field])?row[field]:[]]));
+      return {...row,...lists};
+    });
+  }
+  if(Number.isSafeInteger(value.next))s.next=value.next;
 }
 export function saveCityProfile(){
   if(!cityProfileId)return;
-  const issues=s.issues.map(({before,...issue})=>({...issue,before:'',report:issue.report?{...issue.report,after:''}:null}));
-  writeLocal('city-'+cityProfileId,{issues,groups:s.groups,events:s.events,next:s.next});
+  const key='city-'+cityProfileId;
+  const issues=s.issues.map(({before,...issue})=>({...issue,before:'',report:issue.report?{...issue.report,photo:'',after:''}:null}));
+  const snapshot=structuredClone({issues,groups:s.groups,events:s.events,next:s.next});
+  return updateCity(()=>{
+    const {value,issue}=readLocalObject(key);
+    return issue!=='unavailable' && writeLocalObject(key,{...value,...snapshot});
+  });
 }

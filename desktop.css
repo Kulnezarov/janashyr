@@ -219,7 +219,7 @@
   .support-page:has(.access-route-layout) .support-heading {
     margin-inline:calc((100% - 100vw)/2);
     padding:35px max(48px,calc((100vw - 1280px)/2));
-    background:linear-gradient(90deg,#def0e8 25%,#def0e8ef 43%,#def0e835 73%),url('assets/card-access.png') right 57%/cover;
+    background:linear-gradient(90deg,#def0e8 25%,#def0e8ef 43%,#def0e835 73%),url('assets/card-access.webp') right 57%/cover;
   }
   .profile-lead {
     margin-inline:calc((100% - 100vw)/2);
@@ -611,7 +611,7 @@ form:has(select[name="format"] option[value="local"]:checked) .help-location { d
 
 .access-help-window { margin:0 0 13px; }
 @media(max-width:620px) {
-  .donor-hero { background-image:linear-gradient(90deg,#f7dce1 36%,#f7dce1eb 72%,#f7dce188),url('assets/card-donation.png'); }
+  .donor-hero { background-image:linear-gradient(90deg,#f7dce1 36%,#f7dce1eb 72%,#f7dce188),url('assets/card-donation.webp'); }
   .access-map svg text { font-size:16px; }
 }
 
@@ -884,3 +884,45 @@ form:has(select[name="format"] option[value="local"]:checked) .help-location { d
   .home-chat-panel .home-chat-prompts button { padding-inline: 6px; }
   .home-chat-panel input { font-size: 16px; }
 }
+
+.site button:not([hidden]), .site .leaflet-control-zoom a {
+  min-inline-size: 44px;
+  min-block-size: 44px;
+}
+.site .leaflet-control-zoom a {
+  display: grid;
+  place-items: center;
+}
+.site .header .languages-mobile button { min-inline-size: 44px; }
+.site.header-over-cover:not(.header-light-cover) .header {
+  background: #302536;
+}
+.site.header-light-cover .header {
+  background: #fff5ea;
+}
+.site.header-light-cover .header .main-nav > a:is(:hover,:focus-visible,.nav-active),
+.site.header-light-cover .header .services-trigger:is(:hover,:focus-visible,.nav-active),
+.site.header-light-cover .header .languages button[aria-pressed="true"] {
+  background: var(--release-lilac);
+  color: var(--release-plum);
+}
+.site.header-over-cover .cleanup-page > .breadcrumbs {
+  width: fit-content;
+  max-width: calc(100% - 30px);
+  padding-inline: 9px;
+  border-radius: 7px;
+  background: #213447;
+}
+.site.header-over-cover .cleanup-page > .breadcrumbs span[aria-current] { color: inherit; }
+.site .route-mode label, .site .access-filters label, .site .psych-time input + span {
+  min-block-size: 44px;
+}
+.site :focus-visible {
+  outline: 2px solid #51285f;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.project-info-roadmap .project-info-path { display: block; }
+.project-info-roadmap ul { padding-inline-start: 22px; }
+.project-info-roadmap li + li { margin-top: 6px; }

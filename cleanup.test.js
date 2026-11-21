@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { activateProfile, createProfile, currentProfile, getProfiles, renderLogin, renderProfile, signOutProfile, writeLocal } from './profiles.js';
-import { cleanupClick, cleanupHistory, renderCleanup } from './cleanup.js';
+import {cleanupHistory,renderCleanup} from './cleanup.js';
+import {activityStart,activityEnd,changeParticipation,cityActivities,readParticipation,filterActivities,helpMinutes} from './city-participation.js';
 
 const roles = ['volunteer', 'psychologist', 'teacher', 'learner', 'pensioner', 'helper'];
-const districts = ['abai', 'farabi', 'enbekshi', 'karatau', 'turan'];
 let previousStorage;
 
 beforeEach(() => {
@@ -20,7 +20,6 @@ beforeEach(() => {
   writeLocal('profiles', []);
   writeLocal('cleanup-entries', []);
   signOutProfile();
-  cleanupClick('cleanup-zone', 'abai', null);
 });
 
 afterEach(() => {
@@ -28,11 +27,9 @@ afterEach(() => {
   else delete globalThis.localStorage;
 });
 
-const slotIds = markup => [...markup.matchAll(/data-action="cleanup-join" data-id="([^"]+)"/g)].map(match => match[1]);
-
 test('six local roles can be created, switched, and restored without storing credentials', () => {
   const previews = getProfiles();
-  assert.deepEqual(previews.map(profile => profile.role), roles);
+  assert.deepEqual([...new Set(previews.map(profile => profile.role))], roles);
   assert.equal(currentProfile(), null);
   assert.equal(createProfile('X', 'volunteer'), null);
   assert.equal(createProfile('Mistake', 'admin'), null);
@@ -59,56 +56,82 @@ test('six local roles can be created, switched, and restored without storing cre
   assert.deepEqual(activateProfile(custom[0].id), custom[0]);
 });
 
-test('Shymkent district table exposes at most three 40-person demo groups in each language', () => {
-  const profile = activateProfile('preview-volunteer');
-  for (const lang of ['ru','kk']) {
-    for (const district of districts) {
-      assert.equal(cleanupClick('cleanup-zone', district, profile), true);
-      const page = renderCleanup(lang, profile);
-      assert.match(page, /Шымкент/);
-      assert.deepEqual([...page.matchAll(/data-action="cleanup-zone" data-id="([^"]+)"/g)].map(match => match[1]), districts);
-      assert.match(page,new RegExp(`data-id="${district}" aria-pressed="true"`));
-      assert.equal(slotIds(page).length, 3);
-      assert.equal((page.match(/<progress value="\d+" max="40"/g) || []).length, 3);
-      assert.ok(slotIds(page).every(slot => slot.startsWith(district + '-')));
-    }
-  }
-  assert.equal(cleanupClick('cleanup-zone', 'missing', profile), true);
-  assert.match(renderCleanup('ru', profile), /data-id="turan" aria-pressed="true"/);
+const now=Date.parse('2030-05-06T00:00:00Z');
+const activity=(prefix,time=now)=>cityActivities(readParticipation().rows,time)
+  .find(row=>row.id.startsWith(prefix) && activityStart(row)>time);
+const apply=(action,id,actor='one',time=now)=>changeParticipation(action,id,actor,time);
+
+test('city catalog offers eight upcoming actions across five districts with combined filters',()=>{
+  const items=cityActivities([],now);
+  const upcoming=items.filter(row=>activityStart(row)>now);
+  assert.equal(upcoming.length,8);
+  assert.equal(new Set(upcoming.map(row=>row.district)).size,5);
+  assert.equal(new Set(upcoming.map(row=>row.type)).size,4);
+  const filtered=filterActivities(upcoming,{district:'abai',type:'cleanup',date:''});
+  assert.equal(filtered.length,1);
+  assert.deepEqual(filterActivities(upcoming,{district:'abai',type:'planting',date:filtered[0].date}),[upcoming.find(row=>row.type==='planting' && row.district==='abai')]);
+  for(const lang of ['ru','kk'])assert.match(renderCleanup(lang,null),/id="cleanup-filters"/);
 });
 
-test('cleanup signup respects capacity, avoids duplicate spots, and keeps cancellation history separate', () => {
-  const volunteer = createProfile('Тестовый волонтёр', 'volunteer');
-  const helper = createProfile('Тестовый помощник', 'helper');
-  const learner = createProfile('Тестовый ученик', 'learner');
-  const initial = renderCleanup('ru', volunteer);
-  const group = slotIds(initial).find(slot => slot.startsWith('abai-2-'));
-  assert.ok(group);
-  assert.match(initial, /38 \/ 40/);
+test('full activity rejects direct signup and offers a separate waitlist',()=>{
+  const full=activity('center-seniors');
+  assert.equal(full.status,'full');
+  assert.equal(apply('join',full.id),'full');
+  assert.equal(apply('wait',full.id),'waited');
+  assert.equal(readParticipation().rows[0].status,'waiting');
+  assert.equal(activity('center-seniors').signedUp.length,full.capacity);
+  assert.equal(apply('wait',full.id),'duplicate');
+});
 
-  cleanupClick('cleanup-join', group, null);
-  cleanupClick('cleanup-join', 'made-up-slot', volunteer);
-  assert.match(cleanupHistory('ru', volunteer), /Записей на уборку пока нет/);
-  cleanupClick('cleanup-join', group, volunteer);
-  cleanupClick('cleanup-join', group, volunteer);
-  assert.match(renderCleanup('ru', volunteer), /39 \/ 40[^<]*Вы записаны/);
-  assert.equal((cleanupHistory('ru', volunteer).match(/Демо-запись/g) || []).length, 1);
-  assert.match(cleanupHistory('ru', helper), /Записей на уборку пока нет/);
+test('duplicate activity signup does not increment participant count',()=>{
+  const item=activity('park-cleanup');
+  assert.equal(apply('join',item.id),'entered');
+  assert.equal(apply('join',item.id),'duplicate');
+  assert.equal(activity('park-cleanup').signedUp.length,item.seeded+1);
+});
 
-  cleanupClick('cleanup-join', group, helper);
-  assert.match(renderCleanup('ru', learner), /40 \/ 40/);
-  assert.match(renderCleanup('ru', learner), /Нет мест/);
-  cleanupClick('cleanup-join', group, learner);
-  cleanupClick('cleanup-leave', group, learner);
-  assert.match(cleanupHistory('ru', learner), /Записей на уборку пока нет/);
-  assert.match(cleanupHistory('kk', helper), /Демо жазылу/);
+test('signup rejects overlapping time while allowing another non-overlapping activity',()=>{
+  const first=activity('park-cleanup'), overlap=activity('park-planting'), later=activity('walk-cleanup');
+  assert.equal(first.date,overlap.date);
+  assert.equal(apply('join',first.id),'entered');
+  assert.equal(apply('join',overlap.id),'overlap');
+  assert.equal(apply('join',later.id),'entered');
+});
 
-  signOutProfile();
-  assert.match(cleanupHistory('ru', currentProfile()), /Записей на уборку пока нет/);
-  cleanupClick('cleanup-leave', group, activateProfile(volunteer.id));
-  assert.match(cleanupHistory('ru', volunteer), /Отменено/);
-  assert.match(cleanupHistory('ru', helper), /Демо-запись/);
-  cleanupClick('cleanup-join', group, activateProfile(learner.id));
-  assert.match(cleanupHistory('ru', learner), /Демо-запись/);
-  assert.match(renderCleanup('ru', learner), /40 \/ 40[^<]*Вы записаны/);
+test('cancellation releases a seat and both the original participant and a waiting participant can register again',()=>{
+  const item=activity('walk-cleanup');
+  assert.equal(apply('join',item.id,'one'),'entered');
+  assert.equal(apply('wait',item.id,'two'),'waited');
+  assert.equal(apply('leave',item.id,'one'),'cancelled');
+  assert.equal(activity('walk-cleanup').signedUp.length,item.seeded);
+  assert.equal(apply('join',item.id,'one'),'entered');
+  assert.equal(apply('leave',item.id,'one'),'cancelled');
+  assert.equal(apply('join',item.id,'two'),'entered');
+  assert.equal(readParticipation().rows.find(row=>row.userId==='two').status,'joined');
+});
+
+test('a guest cannot sign up, reserve a waitlist spot or change activity storage',()=>{
+  assert.equal(apply('join',activity('park-cleanup').id,null),'profileRequired');
+  assert.equal(apply('wait',activity('center-seniors').id,null),'profileRequired');
+  assert.equal(readParticipation().rows.length,0);
+});
+
+test('past participation counts as help hours and can no longer be cancelled',()=>{
+  const item=activity('park-cleanup');
+  assert.equal(apply('join',item.id),'entered');
+  assert.equal(helpMinutes(readParticipation().rows,'one',activityEnd(item)-1),0);
+  assert.equal(helpMinutes(readParticipation().rows,'one',activityEnd(item)),120);
+  assert.equal(cityActivities(readParticipation().rows,activityEnd(item)).find(row=>row.id===item.id).status,'past');
+  assert.equal(apply('leave',item.id,'one',activityEnd(item)),'closed');
+});
+
+test('old enrollment snapshots are retained and can be cancelled by their original profile',()=>{
+  const slot={id:'abai-0-2030-05-08',zone:'abai',point:0,date:'2030-05-08',time:'10:00',base:22,capacity:40};
+  writeLocal('cleanup-entries',[{profile:'one',slot,cancelled:false}]);
+  const old=readParticipation().rows[0];
+  assert.equal(old.activityId,slot.id);
+  assert.equal(old.status,'joined');
+  assert.match(cleanupHistory('ru',{id:'one'}),/Группа уборки 1/);
+  assert.equal(apply('leave',slot.id,'one'),'cancelled');
+  assert.equal(readParticipation().rows[0].status,'cancelled');
 });

@@ -21,7 +21,7 @@
   color:#fff9fc;
 }
 .project-info-about .project-info-hero {
-  background:linear-gradient(90deg,#211830 0%,#211830ed 37%,#21183030 85%),url('assets/hero-kazakhstan.png') 60% 48% / cover;
+  background:linear-gradient(90deg,#211830 0%,#211830ed 37%,#21183030 85%),url('assets/hero-kazakhstan.webp') 60% 48% / cover;
 }
 .project-info-intro { max-width:55ch; }
 .project-info-intro h1 { margin:0 0 12px; color:#fff; font-size:clamp(40px,6vw,79px); letter-spacing:-.06em; line-height:1; }

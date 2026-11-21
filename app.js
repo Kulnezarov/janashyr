@@ -1,29 +1,50 @@
 import {sitePath,siteHref,siteMarkup} from './ui.js';
-import {currentProfile,activateProfile,createProfile,signOutProfile,renderLogin,renderProfile,readLocal,writeLocal} from './profiles.js';
-import {renderCleanup,cleanupClick,cleanupHistory,cleanupOverview} from './cleanup.js';
+import {currentProfile,activateProfile,createProfile,signOutProfile,renderLogin,renderProfile,readLocal,writeLocal,getProfiles,profileStorageIssue,storageText,resetDemoStorage,demoResetText,renderDemoReset} from './profiles.js';
+import {bookingProfileMatches,renderBookingProfile} from './booking.js';
+import {renderCleanup,cleanupClick,cleanupHistory,cleanupOverview,clearCleanupFeedback,renderActivityDialog,cleanupSubmit} from './cleanup.js';
+import {renderReportForm,renderReportHistory,reportAction,reportSubmit,reportInput,resetReportView} from './city-reports.js';
 import {renderHomeChat,homeChatAction,homeChatSubmit,homeChatInput,fitHomeChat,resetHomeChat} from './home-chat.js';
-import {renderEducation,educationClick,educationSubmit,educationHistory} from './education-hub.js';
+import {renderEducation,educationClick,educationSubmit,educationHistory,educationBookingRole} from './education-hub.js';
+import {updateEducation} from './education-data.js';
+import {renderLessonProfile,renderLessonBell,renderLessonDialog,openLesson,lessonClick,lessonSubmit,lessonInput,clearLessonView} from './education-lessons.js';
 import {renderDigital,digitalClick,digitalSubmit,digitalHistory,digitalOverview,digitalInput} from './digital-hub.js';
 import {renderProjectInfo} from './project-info.js';
 import {renderCity,cityAccount,cityAction,cityInput,citySubmit,clearCityNotice,useCityProfile,saveCityProfile} from './city.js';
-import {renderAccess,accessAccount,accessOverview,accessAction,accessInput,accessSubmit,clearAccessNotice,useAccessProfile,saveAccessProfile} from './access.js';
-import {renderDonor,donorAccount,donorOverview,donorAction,donorInput,donorNavigate,useDonorProfile} from './donor.js';
+import {renderAccess,accessAccount,accessOverview,accessAction,accessInput,accessSubmit,clearAccessNotice,useAccessProfile,saveAccessProfile,
+  accessNeedsProfile,accessNavigate,accessRename} from './access.js';
+import {routePath,useLivePlanner,routeNavigate,renderRoutePage,mountPlanner,plannerClick,plannerInput,plannerSubmit} from './route-planner.js';
+import {renderDonor,donorAccount,donorOverview,donorAction,donorInput,donorNavigate,donorSubmit,useDonorProfile,donorBookingAction} from './donor.js';
 import {renderSupport,bindPsychCarousel,accountContent,supportOverview,supportAction,supportSubmit,supportInput,clearNotice,useSupportProfile,saveSupportProfile,clinicianWorkspace} from './support.js';
 import {homeCommunity, homeMapAction, siteFooter, supportIconPath} from './landing-sections.js';
 import {content} from './content.js';
 let lang = readLocal('language')==='ru'?'ru':'kk';
 let profile = currentProfile();
-function loadProfile(next){
+function loadProfile(next,keepDonorDraft=false,keepReportDraft=false,keepAccessDraft=false){
   profile=next;
   useSupportProfile(profile);
-  useAccessProfile(profile);
+  useAccessProfile(profile,keepAccessDraft);
   useCityProfile(profile);
-  useDonorProfile(profile);
+  useDonorProfile(profile,keepDonorDraft);
+  clearCleanupFeedback();
+  resetReportView(keepReportDraft);
+  clearLessonView(true);
 }
 loadProfile(profile);
 let menuOpen = false;
 let servicesOpen = false;
 let cardsRevealed = false;
+let pendingBooking = null;
+let resetOpen = false;
+let resetFailed = false;
+const currentUrl = new URL(location.href || 'http://localhost');
+let resetDone = sitePath()==='/login' && currentUrl.searchParams.get('demo-reset')==='1';
+if(resetDone){
+  currentUrl.searchParams.delete('demo-reset');
+  history.replaceState?.({},'',currentUrl.pathname+currentUrl.search);
+}
+let activeDialog = null;
+let dialogOpener = null;
+let trigger = null;
 let cardRevealObserver = null;
 const app = document.querySelector('#app');
 const href = slug => `/directions/${slug}`;
@@ -34,7 +55,7 @@ const chrome = {
 function header(t) {
   const c=chrome[lang],current=sitePath();
   const languages=(variant)=>`<div class="languages languages-${variant}" role="group" aria-label="${t.language}"><button id="language-${variant}-kk" data-lang="kk" aria-pressed="${lang==='kk'}">ҚАЗ</button><span class="language-separator" aria-hidden="true">/</span><button id="language-${variant}-ru" data-lang="ru" aria-pressed="${lang==='ru'}">РУС</button></div>`;
-  return `<a class="skip-link" href="#main-content">${lang==='kk'?'Негізгі мазмұнға өту':'Перейти к содержимому'}</a><header class="header"><div class="wrap header-inner"><a class="brand" href="/" data-link aria-label="JANASHYR — ${c.home}"><img class="brand-logo" src="/assets/care-logo.png?v=first" alt="" width="48" height="48"><span>JANASHYR</span></a>${languages('mobile')}<button type="button" class="menu-toggle" data-action="menu" aria-expanded="${menuOpen}" aria-controls="site-navigation" aria-label="${menuOpen?c.close:c.menu}"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="${menuOpen?'M6 6l12 12M18 6 6 18':'M4 6h16M4 12h16M4 18h16'}"/></svg></button><div id="site-navigation" class="header-content ${menuOpen?'open':''}"><nav class="main-nav" aria-label="${t.nav}"><a class="nav-home ${current==='/'?'nav-active':''}" href="/" data-link ${current==='/'?'aria-current="page"':''}>${c.home}</a><div class="services-menu ${servicesOpen?'is-open':''}"><button class="services-trigger ${current.startsWith('/directions/')?'nav-active':''}" type="button" data-action="services-menu" aria-expanded="${servicesOpen}" aria-haspopup="true" aria-controls="services-list">${c.services}<svg width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div id="services-list" class="services-dropdown">${t.lanes.map(x=>`<a href="${href(x.slug)}" data-link ${current.startsWith(href(x.slug))?'aria-current="page"':''}>${x.title}</a>`).join('')}</div></div><a href="/volunteers" data-link ${current==='/volunteers'?'aria-current="page"':''}>${c.volunteers}</a><a href="/organizations" data-link ${current==='/organizations'?'aria-current="page"':''}>${c.organizations}</a><a href="/about" data-link ${current==='/about'?'aria-current="page"':''}>${c.about}</a></nav><div class="tools">${languages('desktop')}<a class="login" href="${profile?'/account':'/login'}" data-link><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M5 20c.3-3.5 3.1-5.5 7-5.5s6.7 2 7 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>${profile?c.account:c.login}</span></a></div></div></div></header>`
+  return `<a class="skip-link" href="#main-content">${lang==='kk'?'Негізгі мазмұнға өту':'Перейти к содержимому'}</a><header class="header"><div class="wrap header-inner"><a class="brand" href="/" data-link aria-label="JANASHYR — ${c.home}"><img class="brand-logo" src="/assets/care-logo.webp" alt="" width="48" height="48"><span>JANASHYR</span></a><div class="header-mobile-tools">${languages('mobile')}${renderLessonBell(lang,profile)}</div><button type="button" class="menu-toggle" data-action="menu" aria-expanded="${menuOpen}" aria-controls="site-navigation" aria-label="${menuOpen?c.close:c.menu}"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="${menuOpen?'M6 6l12 12M18 6 6 18':'M4 6h16M4 12h16M4 18h16'}"/></svg></button><div id="site-navigation" class="header-content ${menuOpen?'open':''}"><nav class="main-nav" aria-label="${t.nav}"><a class="nav-home ${current==='/'?'nav-active':''}" href="/" data-link ${current==='/'?'aria-current="page"':''}>${c.home}</a><div class="services-menu ${servicesOpen?'is-open':''}"><button class="services-trigger ${current.startsWith('/directions/')?'nav-active':''}" type="button" data-action="services-menu" aria-expanded="${servicesOpen}" aria-haspopup="true" aria-controls="services-list">${c.services}<svg width="12" height="8" viewBox="0 0 12 8" fill="none" aria-hidden="true"><path d="M1 1.5 6 6.5 11 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div id="services-list" class="services-dropdown">${t.lanes.map(x=>`<a href="${href(x.slug)}" data-link ${current.startsWith(href(x.slug))?'aria-current="page"':''}>${x.title}</a>`).join('')}</div></div><a href="/volunteers" data-link ${current==='/volunteers'?'aria-current="page"':''}>${c.volunteers}</a><a href="/organizations" data-link ${current==='/organizations'?'aria-current="page"':''}>${c.organizations}</a><a href="/about" data-link ${current==='/about'?'aria-current="page"':''}>${c.about}</a></nav><div class="tools">${languages('desktop')}${renderLessonBell(lang,profile)}<a class="login" href="${profile?'/account':'/login'}" data-link><svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="8" r="3.5" stroke="currentColor" stroke-width="1.6"/><path d="M5 20c.3-3.5 3.1-5.5 7-5.5s6.7 2 7 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>${profile?c.account:c.login}</span></a></div></div></div></header>`
 }
 const heroCopy={
   kk:{eyebrow:'ӘЛЕУМЕТТІК ПЛАТФОРМА',headline:'Көмек әрқашан жаныңда.',lead:'Көмек әрқашан ',highlight:'жаныңда.',desc:'Психологиялық қолдау, қан донорлығы, мүмкіндігі шектеулі адамдарға көмек және қаламызға қамқорлық — бір платформада.',help:'Көмек алу',how:'Бұл қалай жұмыс істейді',},
@@ -56,7 +77,7 @@ const homeStepIcons=[
   '<rect x="5" y="4.5" width="14" height="16" rx="2"/><path d="M9 4.5V3h6v1.5M8.5 12.5l2.2 2.1 4.8-5"/>'
 ];
 function homeSections(t){const h=homeSectionsCopy[lang],slugs=['support','donation','accessibility','city'],visuals=['support','donation','access','city'];return `<section id="directions" class="home-services" aria-label="${h.heading}"><div class="wrap"><div class="home-service-grid">${slugs.map((slug,i)=>`<a class="home-service-card home-service-${visuals[i]}" href="${href(slug)}" data-link><span class="home-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${homeCardIcons[i]}</svg></span><h2>${h.titles[i]}</h2><p>${h.descs[i]}</p><span class="home-card-arrow" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>`).join('')}</div></div></section><section id="how" class="home-how" aria-labelledby="home-how-title"><div class="wrap home-how-layout"><div class="home-how-intro"><h2 id="home-how-title">${h.how}</h2><p>${h.howSub}</p></div><div class="home-how-steps">${h.steps.map((step,i)=>`<article class="home-how-step"><span class="home-step-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${homeStepIcons[i]}</svg></span><div><h3>${step[0]}</h3><p>${step[1]}</p></div>${i<h.steps.length-1?`<span class="home-step-connector" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h15m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`:``}</article>`).join('')}</div><p class="home-how-note">${h.note}</p></div></section>`}
-function home(t){const h=heroCopy[lang];return `<main><section class="hero"><div class="hero-overlay" aria-hidden="true"></div><div class="wrap hero-grid"><div class="hero-copy"><p class="hero-label">${h.eyebrow}</p><h1 aria-label="JANASHYR ${h.headline}"><span>${h.lead}<em class="hero-highlight">${h.highlight}</em></span></h1><p class="hero-intro">${h.desc}</p><div class="hero-actions"><a class="button primary" href="/directions/support" data-link>${h.help}<svg class="help-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a class="button secondary hero-how" href="#how"><svg class="play-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M10 8.3v7.4L15.7 12 10 8.3Z" fill="currentColor"/></svg>${h.how}</a></div></div></div></section>${homeSections(t)}${homeCommunity(lang)}${renderHomeChat(lang)}</main>`}
+function home(t){const h=heroCopy[lang];return `<main><section class="hero"><div class="hero-overlay" aria-hidden="true"></div><div class="wrap hero-grid"><div class="hero-copy"><p class="hero-label">${h.eyebrow}</p><h1 aria-label="JANASHYR ${h.headline}"><span>${h.lead}<em class="hero-highlight">${h.highlight}</em></span></h1><p class="hero-intro">${h.desc}</p><div class="hero-actions"><a class="button primary" href="/directions/support" data-link>${h.help}<svg class="help-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/></svg></a><a class="button secondary hero-how" href="#how"><svg class="play-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M10 8.3v7.4L15.7 12 10 8.3Z" fill="currentColor"/></svg>${h.how}</a></div></div></div></section>${homeSections(t)}${homeCommunity(lang)}</main>`}
 function volunteerPage(){
   const kk=lang==='kk';
   const copy=kk?{
@@ -99,19 +120,23 @@ function volunteerPage(){
   </main>`;
 }
 function routePage(path,t,lane){
-  if(path==='/login')return renderLogin(lang);
+  if(path==='/login')return renderLogin(lang,resetDone);
   if(path==='/account')return profile?renderProfile(lang,profile,location.hash.slice(1),{
     'clinician':()=>clinicianWorkspace(lang,profile),
     'support-account':()=>accountContent(lang),
-    'education-history':()=>educationHistory(lang,profile),
+    'education-history':()=>renderLessonProfile(lang,profile)+educationHistory(lang,profile),
     'digital-history':()=>digitalHistory(lang,profile),
     'donation':()=>donorAccount(lang),
     'accessibility':()=>accessAccount(lang),
-    'profile-cleanup':()=>cleanupHistory(lang,profile)+cityAccount(lang),
+    'profile-cleanup':()=>cleanupHistory(lang,profile)+renderReportHistory(lang,profile)+
+      `<details class="guide city-past"><summary>${lang==='kk'?'Бұрынғы топтар мен іс-шаралар':'Прежние группы и события'}</summary>${cityAccount(lang)}</details>`,
   },[...supportOverview(lang),...donorOverview(lang),...accessOverview(lang),...digitalOverview(lang,profile),...cleanupOverview(lang,profile)]):renderLogin(lang);
   if(path==='/organizations'||path==='/about')return renderProjectInfo(path.slice(1),lang);
   if(path==='/volunteers')return volunteerPage();
   if(path==='/directions/city'||path==='/directions/city/groups')return renderCleanup(lang,profile);
+  if(path==='/directions/city/new')return renderReportForm(lang,profile);
+  if(path===routePath && useLivePlanner(new URL(location.href || path,'http://localhost')))
+    return renderRoutePage(lang,document.querySelector('#route-directions')?.open);
   if(path==='/directions/support/education')return renderEducation(lang,profile);
   if(path==='/directions/support/digital')return renderDigital(lang,profile);
   const feature=renderCity(path,lang) ?? renderAccess(path,lang) ?? renderDonor(path,lang) ?? renderSupport(path,lang);
@@ -119,13 +144,13 @@ function routePage(path,t,lane){
   if(path==='/')return home(t);
   return `<main class="wrap inner info-page"><h1>${lang==='kk'?'Бет табылмады':'Страница не найдена'}</h1><a class="button primary" href="/" data-link>${chrome[lang].home}</a></main>`;
 }
-function focusedSelector(){
-  const el=document.activeElement;
+function focusedSelector(el=document.activeElement){
   if(!el || !app.contains?.(el))return null;
   const safe=value=>globalThis.CSS?.escape?CSS.escape(value):String(value).replace(/[^a-zA-Z0-9_-]/g,'');
+  const area=el.closest?.('.header-mobile-tools')?'.header-mobile-tools ':el.closest?.('.tools')?'.tools ':'';
   if(el.id)return `#${safe(el.id)}`;
   for(const key of ['action','lang','accessFilter','cityDraft','accessDraft','cityAdminStatus','cityAdminLevel','cityAdminReason','adminStatus','adminComment']){
-    if(el.dataset?.[key]){const attr=key.replace(/[A-Z]/g,m=>'-'+m.toLowerCase());let selector=`[data-${attr}="${safe(el.dataset[key])}"]`;if(el.dataset.id)selector+=`[data-id="${safe(el.dataset.id)}"]`;return selector}
+    if(el.dataset?.[key]){const attr=key.replace(/[A-Z]/g,m=>'-'+m.toLowerCase());let selector=`[data-${attr}="${safe(el.dataset[key])}"]`;if(el.dataset.id)selector+=`[data-id="${safe(el.dataset.id)}"]`;return area+selector}
   }
   if(el.name&&el.form?.id)return `#${safe(el.form.id)} [name="${safe(el.name)}"]`;
   return null;
@@ -146,36 +171,151 @@ function prepareCardReveal(){
   },{threshold:0.12});
   cardRevealObserver.observe(grid);
 }
-function render(){let focus=focusedSelector();const optionsOpen=document.querySelector('.access-options')?.open;let t=content[lang];document.documentElement.lang=lang;let path=sitePath();let lane=t.lanes.find(x=>href(x.slug)===path);let body=routePage(path,t,lane);const theme=path.startsWith('/directions/support')?'support':path.startsWith('/directions/donation')?'donation':path.startsWith('/directions/accessibility')?'access':path.startsWith('/directions/city')?'city':path==='/account'||path==='/login'||path==='/organizations'||path==='/about'||path==='/volunteers'?'account':'home'; if(path.startsWith('/directions/')){const laneForPath=t.lanes.find(x=>path===href(x.slug)||path.startsWith(href(x.slug)+'/'));if(laneForPath){const sectionPath=href(laneForPath.slug);const crumbs=`<nav class="breadcrumbs" aria-label="${lang==='kk'?'Навигация жолы':'Навигационная цепочка'}"><a href="/" data-link>${t.home}</a><span aria-hidden="true">/</span>${path===sectionPath?`<span aria-current="page">${laneForPath.title}</span>`:`<a href="${sectionPath}" data-link>${laneForPath.title}</a>`}</nav>`;body=body.replace(/<a class="back"[^>]*>.*?<\/a>/,crumbs)}} body=body.replace('<main', '<main id="main-content" tabindex="-1"'); app.innerHTML=siteMarkup(`<div class="site theme-${theme}${path==="/directions/support/psychology"?' theme-psychology':''}${['/','/directions/support/psychology','/directions/support/digital','/directions/donation','/directions/accessibility','/directions/city','/directions/city/groups','/volunteers','/organizations','/about'].includes(path)?' header-over-cover':''}${['/directions/support/psychology','/directions/support/digital','/directions/donation','/directions/accessibility'].includes(path)?' header-light-cover':''}">${header(t)}${body}${siteFooter(t,lang)}</div>`);
+// Keep stable regions mounted when a dialog, a message or a menu changes.
+const renderedRegions = new Map();
+function renderRegions(className,regions){
+  if(!document.createElement || !document.createComment){
+    app.innerHTML=siteMarkup('<div class="'+className+'">'+regions.map(([,html])=>html).join('')+'</div>');
+    return;
+  }
+  let site=app.firstElementChild;
+  if(!site){
+    site=document.createElement('div');
+    app.append(site);
+  }
+  site.className=className;
+  for(const [name,html] of regions){
+    let region=renderedRegions.get(name);
+    if(!region){
+      region={anchor:document.createComment(name),nodes:[],html:null};
+      renderedRegions.set(name,region);
+      site.append(region.anchor);
+    }
+    if(region.html===html)continue;
+    const template=document.createElement('template');
+    template.innerHTML=siteMarkup(html);
+    for(const node of region.nodes)node.remove();
+    region.nodes=[...template.content.childNodes];
+    region.anchor.before(template.content);
+    region.html=html;
+  }
+}
+function focusControl(selector){
+  if(selector)document.querySelector(selector)?.focus({preventScroll:true});
+}
+
+function closeDemoReset(){resetOpen=false;render();}
+function renderDialogs(){
+  const actions=[
+    ['booking-profile-dialog',cancelBooking],
+    ['lesson-dialog',()=>lessonClick('lesson-close',{},profile,render)],
+    ['city-activity-dialog',()=>cleanupClick('cleanup-close',null,profile,render)],
+    ['demo-reset-dialog',closeDemoReset],
+    ['psych-booking',()=>supportAction('psych-close',null,lang,render)]
+  ];
+  for(const [id,close] of actions){
+    const dialog=document.querySelector('#'+id);
+    if(!dialog?.showModal)continue;
+    if(activeDialog!==id){
+      dialogOpener=dialogOpener || (id==='booking-profile-dialog'?pendingBooking?.focus:null) || trigger || focusedSelector();
+      activeDialog=id;
+    }
+    if(!dialog.open){
+      dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
+      if(id==='psych-booking')dialog.addEventListener('click',event=>{
+        if(event.target!==dialog)return;
+        const bounds=dialog.getBoundingClientRect();
+        if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom)close();
+      });
+      dialog.showModal();
+    }
+    return null;
+  }
+  if(activeDialog){
+    const restore=dialogOpener;
+    activeDialog=dialogOpener=null;
+    return restore;
+  }
+  return null;
+}
+function render(){let focus=focusedSelector();const optionsOpen=document.querySelector('.access-options')?.open;let t=content[lang];document.documentElement.lang=lang;let path=sitePath();let lane=t.lanes.find(x=>href(x.slug)===path);let body=routePage(path,t,lane);const theme=path.startsWith('/directions/support')?'support':path.startsWith('/directions/donation')?'donation':path.startsWith('/directions/accessibility')?'access':path.startsWith('/directions/city')?'city':path==='/account'||path==='/login'||path==='/organizations'||path==='/about'||path==='/volunteers'?'account':'home'; if(path.startsWith('/directions/')){const laneForPath=t.lanes.find(x=>path===href(x.slug)||path.startsWith(href(x.slug)+'/'));if(laneForPath){const sectionPath=href(laneForPath.slug);const crumbs=`<nav class="breadcrumbs" aria-label="${lang==='kk'?'Навигация жолы':'Навигационная цепочка'}"><a href="/" data-link>${t.home}</a><span aria-hidden="true">/</span>${path===sectionPath?`<span aria-current="page">${laneForPath.title}</span>`:`<a href="${sectionPath}" data-link>${laneForPath.title}</a>`}</nav>`;body=body.replace(/<a class="back"[^>]*>.*?<\/a>/,crumbs)}} body=body.replace('<main', '<main id="main-content" tabindex="-1"'); const issue=profileStorageIssue();
+ if(issue)body=body.replace(/(<main[^>]*>)/,'$1'+`<div class="wrap"><p class="demo-notice" role="alert">${storageText[lang][issue]}</p></div>`);
+ if(resetFailed && path==='/account'){
+   body=body.replace(/(<main[^>]*>)/,'$1'+`<div class="wrap"><p class="demo-notice" role="alert">${demoResetText[lang].failed}</p></div>`);
+ }
+ const previousMain=document.querySelector('#main-content');
+ renderRegions(`site theme-${theme}${path==="/directions/support/psychology"?' theme-psychology':''}${['/','/directions/support/psychology','/directions/support/digital','/directions/donation','/directions/accessibility','/directions/city','/directions/city/groups','/volunteers','/organizations','/about'].includes(path)?' header-over-cover':''}${['/directions/support/psychology','/directions/support/digital','/directions/donation','/directions/accessibility'].includes(path)?' header-light-cover':''}`,[
+   ['header',header(t)],
+   ['main',body],
+   ['chat',path==='/'?renderHomeChat(lang):''],
+   ['footer',siteFooter(t,lang)],
+   ['profile-dialog',renderBookingProfile(pendingBooking,profile,lang)],
+   ['lesson-dialog',renderLessonDialog(lang,profile)],
+   ['activity-dialog',renderActivityDialog(lang)],
+   ['reset-dialog',resetOpen?renderDemoReset(lang):'']
+ ]);
  if(optionsOpen){const options=document.querySelector('.access-options');if(options)options.open=true}
+ mountPlanner(document.getElementById?.('route-map-host'),lang,profile,render);
+ const restore=renderDialogs();
  const activeTab=document.querySelector('.profile-anchors [aria-current="page"]');
  if(activeTab && window.matchMedia?.('(max-width: 980px)').matches){
    const tabs=activeTab.parentElement;
    const left=activeTab.offsetLeft-tabs.offsetLeft;
    if(tabs.scrollWidth>tabs.clientWidth)tabs.scrollLeft=Math.max(0,left-10);
  }
- prepareCardReveal();
- bindPsychCarousel(document.querySelector('.psych-carousel-scroll'));
- const bookingDialog=document.getElementById?.('psych-booking');
- if(bookingDialog?.showModal){
-   bookingDialog.showModal();
-   bookingDialog.addEventListener('cancel',event=>{event.preventDefault();supportAction('psych-close',null,lang,render)});
-   bookingDialog.addEventListener('click',event=>{
-     if(event.target!==bookingDialog)return;
-     const bounds=bookingDialog.getBoundingClientRect();
-     if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top||event.clientY>bounds.bottom)
-       supportAction('psych-close',null,lang,render);
-   });
+ if(previousMain!==document.querySelector('#main-content')){
+   prepareCardReveal();
+   bindPsychCarousel(document.querySelector('.psych-carousel-scroll'));
  }
- const chatPanel=document.querySelector('.home-chat-panel');
- if(chatPanel){
-   for(const part of document.querySelectorAll('.site > .skip-link,.site > .header,.site > .site-footer,main > :not(.home-chat-widget)'))part.inert=true;
- } else if(menuOpen && window.matchMedia?.('(max-width: 980px)').matches){
-   for(const part of document.querySelectorAll('.site > main,.site > .site-footer'))part.inert=true;
- }
+ const chatOpen=Boolean(document.querySelector('.home-chat-panel'));
+ const menuModal=menuOpen && window.matchMedia?.('(max-width: 980px)').matches;
+ for(const part of document.querySelectorAll?.('.site > .skip-link,.site > .header') || [])part.inert=chatOpen;
+ for(const part of document.querySelectorAll?.('.site > main,.site > .site-footer') || [])part.inert=chatOpen || menuModal;
+
  fitHomeChat();
- for(const key of ['.chat-log','.home-chat-log']){const log=document.querySelector(key);if(log)log.scrollTop=log.scrollHeight;}if(focus)document.querySelector(focus)?.focus({preventScroll:true}); document.title=(lane?lane.title+' — ':'')+'JANASHYR';}
-function navigate(url){clearNotice();clearAccessNotice();clearCityNotice();donorNavigate(url);servicesOpen=false;history.pushState({},'',siteHref(url));menuOpen=false;render(); if(location.hash && sitePath()!=='/account') document.getElementById(location.hash.slice(1))?.scrollIntoView(); else {window.scrollTo(0,0);document.querySelector('#main-content')?.focus({preventScroll:true})}}
+ for(const key of ['.chat-log','.home-chat-log']){
+   const log=document.querySelector(key);
+   if(log)log.scrollTop=log.scrollHeight;
+ }
+ const modal=activeDialog ? document.querySelector('#'+activeDialog) : null;
+ if(restore)focusControl(restore);
+ else if(focus && (!modal || modal.contains(document.querySelector(focus))))focusControl(focus);
+ document.title=(lane?lane.title+' — ':'')+'JANASHYR';
+}
+function navigate(url){resetOpen=false;resetDone=false;resetFailed=false;pendingBooking=null;clearLessonView();clearCleanupFeedback();resetReportView(sitePath(new URL(url,location.href || 'http://localhost').pathname)==='/directions/city/new');clearNotice();clearAccessNotice();clearCityNotice();donorNavigate(url);accessNavigate(url);routeNavigate(url,profile);servicesOpen=false;history.pushState({},'',siteHref(url));menuOpen=false;render(); if(location.hash && (sitePath()!=='/account' || location.hash==='#city-report-history')) document.getElementById?.(location.hash.slice(1))?.scrollIntoView(); else {window.scrollTo(0,0);document.querySelector('#main-content')?.focus({preventScroll:true})}}
+
+function withBookingProfile(role,execute,{keepDonorDraft=false,keepReportDraft=false,keepAccessDraft=false,purpose=''}={}){
+  if(bookingProfileMatches(profile,role))execute(profile);
+  else {
+    pendingBooking={role,execute,keepDonorDraft,keepReportDraft,keepAccessDraft,purpose,focus:trigger || focusedSelector()};
+    render();
+  }
+}
+
+function runBooking(action,id) {
+  const education=action==='edu-interest';
+  const lesson=action==='lesson-open';
+  const cleanup=action==='cleanup-join' || action==='cleanup-wait';
+  const donor=donorBookingAction(action);
+  if(!education && !lesson && !cleanup && !donor)return false;
+
+  const role=lesson?'learner':education?educationBookingRole(id):null;
+  const execute=()=>{
+    if(education){educationClick(action,id,lang,profile);render()}
+    else if(lesson)openLesson(id,profile,render);
+    else if(cleanup)cleanupClick(action,id,profile,render);
+    else donorAction(action,id,lang,render,navigate);
+  };
+  withBookingProfile(role,execute,{keepDonorDraft:donor});
+  return true;
+}
+
+function cancelBooking(){
+  const focus=pendingBooking?.focus;
+  pendingBooking=null;
+  render();
+  if(focus)document.querySelector(focus)?.focus({preventScroll:true});
+}
 document.addEventListener('click',event=>{
   if(menuOpen && !event.target.closest('.header')){menuOpen=false;servicesOpen=false;render();return}
   const link=event.target.closest('[data-link]');
@@ -187,6 +327,32 @@ document.addEventListener('click',event=>{
   const control=event.target.closest('[data-action]');
   const action=control?.dataset.action, id=control?.dataset.id;
   if(!action)return;
+  trigger=focusedSelector(control);
+  queueMicrotask(()=>{trigger=null;});
+  if(action==='demo-reset-open' && profile){resetOpen=true;render();return;}
+  if(action==='demo-reset-close'){closeDemoReset();return;}
+  if(action==='demo-reset-confirm' && profile && resetOpen){
+    if(resetDemoStorage())location.replace(siteHref('/login')+'?demo-reset=1');
+    else {resetFailed=true;closeDemoReset();}
+    return;
+  }
+  if(action==='booking-profile-close'){cancelBooking();return}
+  if(action==='booking-profile-select' && pendingBooking){
+    const request=pendingBooking;
+    const candidate=getProfiles().find(item=>item.id===id);
+    if(!bookingProfileMatches(candidate,request.role)){
+      request.invalid=true;
+      render();
+      return;
+    }
+    pendingBooking=null;
+    if(profile?.id!==candidate.id)resetHomeChat();
+    loadProfile(activateProfile(id),request.keepDonorDraft,request.keepReportDraft,request.keepAccessDraft);
+    request.execute(profile);
+    if(request.focus && !document.activeElement?.closest?.('main'))
+      document.querySelector(request.focus)?.focus({preventScroll:true});
+    return;
+  }
   if(action==='profile-select'){
     const next=activateProfile(id);
     if(next){if(profile?.id!==next.id)resetHomeChat();loadProfile(next);navigate('/account')}
@@ -194,13 +360,18 @@ document.addEventListener('click',event=>{
   }
   if(action==='logout'){signOutProfile();resetHomeChat();loadProfile(null);navigate('/');return}
   if(homeChatAction(action,id,lang,render)||homeMapAction(action,id,render))return;
-  if(cleanupClick(action,id,profile)||educationClick(action,id,lang,profile)||digitalClick(action,id,lang,profile)){render();
+  if(runBooking(action,id))return;
+  if(action.startsWith('route-') && plannerClick(action,id,lang,render,navigate))return;
+  if(cleanupClick(action,id,profile,render) || reportAction(action,id,profile,render))return;
+  if(action==='lesson-bell'){menuOpen=false;servicesOpen=false}
+  if(action.startsWith('lesson-') && lessonClick(action,control.dataset,profile,render))return;
+  if(action==='edu-unpublish'){
+    const actor=profile;
+    void updateEducation(()=>{if(educationClick(action,id,lang,actor))render()});
+    return;
+  }
+  if(educationClick(action,id,lang,profile)||digitalClick(action,id,lang,profile)){render();
     if(action==='digital-select-volunteer')document.getElementById?.('digital-request-topic')?.focus();
-    if(action==='cleanup-zone' && window.matchMedia?.('(max-width: 620px)').matches){
-      const groups=document.querySelector('.cleanup-groups');
-      groups?.focus({preventScroll:true});
-      groups?.scrollIntoView({block:'start'});
-    }
     return;
   }
   if(action.startsWith('city-admin'))return;
@@ -227,6 +398,28 @@ document.addEventListener('submit',event=>{
     return;
   }
   if(form.id==='home-ai-form'){event.preventDefault();homeChatSubmit(form,render);return}
+  if(form.id==='cleanup-filters'){event.preventDefault();cleanupSubmit(form,render);return;}
+  if(['city-issue-form','city-report-filter'].includes(form.id)){
+    event.preventDefault();
+    reportSubmit(form,render,execute=>withBookingProfile(null,execute,{keepReportDraft:true}));
+    return;
+  }
+  if(['donor-assessment','donor-profile-group-form'].includes(form.id)){
+    event.preventDefault();
+    donorSubmit(form,render,navigate);
+    return;
+  }
+  if(['lesson-filters','lesson-create','lesson-dialog-form'].includes(form.id)){
+    event.preventDefault();
+    lessonSubmit(form,profile,render);
+    return;
+  }
+  if(form.id==='education-publish'){
+    event.preventDefault();
+    const actor=profile;
+    void updateEducation(()=>{if(educationSubmit(form,lang,actor))render()});
+    return;
+  }
   if(/^(education-|digital-)/.test(form.id)){
     event.preventDefault();
     if(educationSubmit(form,lang,profile)||digitalSubmit(form,lang,profile))render();
@@ -237,13 +430,25 @@ document.addEventListener('submit',event=>{
     citySubmit(form,lang,()=>{saveCityProfile();render()},url=>{saveCityProfile();navigate(url)});
     return;
   }
-  if(form.id==='access-form'){event.preventDefault();accessSubmit(form,lang,()=>{saveAccessProfile();render()});return}
+  if(form.id.startsWith('route-')){
+    event.preventDefault();
+    if(form.id.startsWith('route-rename-'))accessRename(form,render);
+    else plannerSubmit(form,lang,render,execute=>withBookingProfile(null,execute,{purpose:'save'}));
+    return;
+  }
+  if(form.id==='access-form'){
+    event.preventDefault();
+    const submit=()=>accessSubmit(form,lang,()=>{saveAccessProfile();render()});
+    if(accessNeedsProfile(form))withBookingProfile(null,submit,{keepAccessDraft:true,purpose:'save'});
+    else submit();
+    return;
+  }
   if(['consult-form','psych-survey-form','volunteer-form','chat-form'].includes(form.id)){
     event.preventDefault();supportSubmit(form,lang,()=>{saveSupportProfile();render()});
   }
 });
-document.addEventListener('input',e=>{if(homeChatInput(e.target))return;if(e.target.form?.id==='profile-create-form' && e.target.name==='alias')e.target.setCustomValidity('');cityInput(e.target,lang,render);accessInput(e.target,lang,render);donorInput(e.target,lang,render);supportInput(e.target,lang,render)});
-document.addEventListener('change',e=>{if(digitalInput(e.target,render))return;cityInput(e.target,lang,render);accessInput(e.target,lang,render);donorInput(e.target,lang,render);supportInput(e.target,lang,render)});
+document.addEventListener('input',e=>{if(plannerInput(e.target,lang,render) || homeChatInput(e.target) || (e.target.id!=='city-issue-photo' && reportInput(e.target,render)))return;if(e.target.form?.id==='profile-create-form' && e.target.name==='alias')e.target.setCustomValidity('');cityInput(e.target,lang,render);accessInput(e.target,lang,render);donorInput(e.target,lang,render);supportInput(e.target,lang,render)});
+document.addEventListener('change',e=>{if(plannerInput(e.target,lang,render)||reportInput(e.target,render)||lessonInput(e.target)||digitalInput(e.target,render))return;cityInput(e.target,lang,render);accessInput(e.target,lang,render);donorInput(e.target,lang,render);supportInput(e.target,lang,render)});
 document.addEventListener('pointerover',e=>{const menu=e.target.closest?.('.services-menu');if(menu)menu.querySelector('.services-trigger')?.setAttribute('aria-expanded','true')});
 document.addEventListener('pointerout',e=>{const menu=e.target.closest?.('.services-menu');if(menu&&!menu.contains(e.relatedTarget)&&!servicesOpen)menu.querySelector('.services-trigger')?.setAttribute('aria-expanded','false')});
 document.addEventListener('keydown',event=>{
@@ -269,5 +474,5 @@ document.addEventListener('keydown',event=>{
 });
 window.visualViewport?.addEventListener('resize',fitHomeChat);
 window.visualViewport?.addEventListener('scroll',fitHomeChat);
-window.addEventListener('popstate',()=>{menuOpen=false;servicesOpen=false;clearNotice();render()});donorNavigate(location.href);render();
+window.addEventListener('popstate',()=>{resetOpen=false;resetDone=false;resetFailed=false;pendingBooking=null;clearLessonView();clearCleanupFeedback();resetReportView(sitePath()==='/directions/city/new');menuOpen=false;servicesOpen=false;clearNotice();donorNavigate(location.href);accessNavigate(location.href);routeNavigate(location.href,profile);render()});donorNavigate(location.href);accessNavigate(location.href);routeNavigate(location.href,profile);render();
 

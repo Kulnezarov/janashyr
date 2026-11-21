@@ -1,20 +1,12 @@
 import {scheduleTimestamp,helpText,helpPlace,helpWindowLabel,helpTimeLabel,readHelpWindow,renderHelpWindowFields} from './ui.js';
-const subjects = {
-  math: ['Математика', 'Математика'],
-  languages: ['Тілдер', 'Языки'],
-  science: ['Жаратылыстану', 'Естественные науки'],
-  digital: ['Цифрлық сауат', 'Цифровая грамотность'],
-  humanities: ['Гуманитарлық пәндер', 'Гуманитарные предметы']
-};
+import {readStoredList,storageText,writeStored as write} from './profiles.js';
+import {subjects,formats,listingsKey,readEducationRecords} from './education-data.js';
+import {renderLessonCatalog} from './education-lessons.js';
 const sources = {
   student: ['Студент', 'Студент'],
   school: ['Озат оқушы', 'Успевающий школьник'],
   teacher: ['Мұғалім', 'Учитель'],
   retired: ['Зейнеттегі мұғалім', 'Педагог на пенсии']
-};
-const formats = {
-  online: ['Онлайн', 'Онлайн'],
-  local: ['Шымкентте жүзбе-жүз', 'Очно в Шымкенте']
 };
 const studyLanguages = {
   kk: ['Қазақша', 'Казахский'],
@@ -70,7 +62,6 @@ const copy = {
     history:'История бесплатного обучения', emptyHistory:'Откликов пока нет.', undo:'Убрать из истории', changed:'Объявление сохранено.', removed:'Объявление снято.', readOnly:'Браузер не разрешил сохранить запись.'
   }
 };
-const listingsKey = 'janashyr.education.listings.v1';
 const historyKey = id => 'janashyr.education.history.v1.' + id;
 const freshFilters = () => ({query:'', subject:'', source:'', format:'', speech:''});
 const state = {view:'teacher', filters:freshFilters(), status:'', draft:null};
@@ -80,31 +71,21 @@ const escape = value => String(value ?? '').replace(/[&<>"']/g, ch=>({'&':'&amp;
 const accepts = (profile, kind) => Boolean(profile?.id && profile.role === kind);
 const actorFor = kind => kind === 'teacher' ? 'learner' : 'teacher';
 
-function read(key) {
-  try {
-    const value = JSON.parse(globalThis.localStorage?.getItem(key) ?? '[]');
-    return Array.isArray(value) ? value : [];
-  } catch {
-    return [];
-  }
+export function educationBookingRole(id) {
+  const offer=listings().find(row=>row.id===id);
+  return offer ? actorFor(offer.kind) : null;
 }
-function write(key, records) {
-  try {
-    if (!globalThis.localStorage) return false;
-    globalThis.localStorage.setItem(key, JSON.stringify(records));
-    return true;
-  } catch {
-    return false;
-  }
-}
-function listings() {
-  return demos.concat(read(listingsKey).filter(row => row?.id && row.owner
-    && ['teacher','learner'].includes(row.kind)
+function listedOffers() {
+  const {rows,issue}=readEducationRecords();
+  return {issue,rows:rows.filter(row => row.owner && ['teacher','learner'].includes(row.kind)
     && own(subjects,row.subject) && own(formats,row.format) && own(studyLanguages,row.speech)
-    && own(schedules,row.schedule) && (row.kind !== 'teacher' || own(sources,row.source))));
+    && own(schedules,row.schedule) && (row.kind !== 'teacher' || own(sources,row.source)))};
 }
+const listings = () => demos.concat(listedOffers().rows);
 function saved(profile) {
-  return profile?.id ? read(historyKey(profile.id)).filter(row=>row?.id && own(subjects,row.subject)) : [];
+  return profile?.id
+    ? readStoredList(historyKey(profile.id),row=>row?.id && own(subjects,row.subject))
+    : {rows:[],issue:''};
 }
 function matches(row, lang) {
   const f=state.filters;
@@ -124,9 +105,9 @@ function listingCard(row, lang, profile, mine) {
   const detail=escape(tr(row.detail,lang) || (row.kind==='teacher'?w.teacherDetail:w.learnerDetail));
   const action=mine
     ? `<span class="edu-listed">${w.saved}</span>`
-    : accepts(profile,actorFor(row.kind))
-      ? `<button type="button" class="edu-button edu-button-accent" data-action="edu-interest" data-id="${escape(row.id)}">${w.save}</button>`
-      : row.owner===profile?.id && row.owner ? `<span class="edu-listed">${w.own}</span>` : '';
+    : row.owner && row.owner===profile?.id
+      ? `<span class="edu-listed">${w.own}</span>`
+      : `<button type="button" class="edu-button edu-button-accent" data-action="edu-interest" data-id="${escape(row.id)}">${w.save}</button>`;
   return `<article class="edu-offer">
     <div class="edu-offer-top"><span class="edu-label">${row.owner?w.local:w.demo}</span><span class="edu-free">${w.free}</span></div>
     <div class="edu-identity"><span class="edu-initial" aria-hidden="true">${escape(String(tr(row.alias,lang) || '?').slice(0,1))}</span>
@@ -163,13 +144,16 @@ function publishPanel(lang,profile,ownListing) {
 }
 export function renderEducation(lang,profile) {
   const w=copy[lang];
-  const rows=listings();
+  const {rows:localOffers,issue:listingIssue}=listedOffers();
+  const rows=demos.concat(localOffers);
   const filtered=rows.filter(row=>matches(row,lang));
-  const liked=new Set(saved(profile).map(row=>row.id));
+  const history=saved(profile);
+  const liked=new Set(history.rows.map(row=>row.id));
+  const storageIssue=listingIssue || history.issue;
   const canInterest=accepts(profile,actorFor(state.view));
   const callout=canInterest
     ? `<p class="edu-scope">${w.scoped}</p>`
-    : `<div class="edu-access"><p>${state.view==='teacher'?w.forLearner:w.forTeacher}</p><a href="${profile?.id?'/account':'/login'}" data-link>${profile?.id?w.profile:w.login}</a></div>`;
+    : `<div class="edu-access"><p>${state.view==='teacher'?w.forLearner:w.forTeacher}</p></div>`;
   return `<main class="edu-hub">
     <div class="wrap edu-wrap">
       <nav class="edu-breadcrumb" aria-label="${lang==='kk'?'Бөлімдер':'Разделы'}"><a href="/directions/support" data-link>${w.back}</a><span aria-hidden="true">/</span><span aria-current="page">${w.name}</span></nav>
@@ -182,6 +166,7 @@ export function renderEducation(lang,profile) {
         </div>
         <div class="edu-hero-art" aria-hidden="true"><span class="edu-notebook"></span><span class="edu-notebook edu-notebook-two"></span><span class="edu-pencil"></span></div>
       </section>
+      ${renderLessonCatalog(lang,profile)}
       <section class="edu-directory" aria-labelledby="edu-directory-title">
         <div class="edu-modes" role="group" aria-label="${w.search}">
           <button type="button" data-action="edu-mode" data-id="teacher" aria-pressed="${state.view==='teacher'}">${w.teachers}</button>
@@ -199,6 +184,7 @@ export function renderEducation(lang,profile) {
         <div class="edu-directory-results">
         <div class="edu-results-head"><h2 id="edu-directory-title">${state.view==='teacher'?w.roster:w.needs}</h2><span role="status">${w.count(filtered.length)}</span></div>
         ${state.status && state.status!=='invalidWindow'?`<p class="edu-notice" role="status">${state.status==='interest'?w.saved:state.status==='invalidWindow'?helpText[lang].invalid:w[state.status]}</p>`:''}
+        ${storageIssue?`<p class="edu-notice" role="alert">${storageText[lang][storageIssue]}</p>`:''}
         ${callout}
         ${filtered.length?`<div class="edu-offers">${filtered.map(row=>listingCard(row,lang,profile,liked.has(row.id))).join('')}</div>`:`<p class="edu-empty">${w.none}</p>`}
         </div></div>
@@ -221,19 +207,21 @@ export function educationClick(action,id,lang,profile) {
   }
   if (action==='edu-interest') {
     const row=listings().find(item=>item.id===id);
-    if (!row || !accepts(profile,actorFor(row.kind)) || row.owner===profile.id) return false;
-    const entries=saved(profile);
-    if (entries.some(item=>item.id===id)) return true;
+    if (!row) { state.status='none'; return true; }
+    if (!accepts(profile,actorFor(row.kind)) || row.owner===profile.id) return false;
+    const {rows:entries}=saved(profile);
+    if (entries.some(item=>item.id===id)) { state.status='interest'; return true; }
     const next={id,alias:row.alias,kind:row.kind,subject:row.subject,format:row.format,from:row.from,until:row.until,location:row.location,at:Date.now()};
     state.status=write(historyKey(profile.id),[next,...entries])?'interest':'readOnly';
     return true;
   }
   if (action==='edu-unsave' && profile?.id) {
-    state.status=write(historyKey(profile.id),saved(profile).filter(item=>item.id!==id))?'':'readOnly';
+    state.status=write(historyKey(profile.id),saved(profile).rows.filter(item=>item.id!==id))?'':'readOnly';
     return true;
   }
   if (action==='edu-unpublish' && (accepts(profile,'teacher') || accepts(profile,'learner'))) {
-    state.status=write(listingsKey,read(listingsKey).filter(row=>row?.owner!==profile.id))?'removed':'readOnly';
+    const records=readEducationRecords();
+    state.status=records.issue!=='unavailable' && write(listingsKey,records.rows.filter(row=>row.owner!==profile.id))?'removed':'readOnly';
     return true;
   }
   return false;
@@ -272,13 +260,16 @@ export function educationSubmit(form,lang,profile) {
   Object.assign(row,availability);
   state.view=kind;
   state.filters=freshFilters();
-  state.status=write(listingsKey,[row,...read(listingsKey).filter(item=>item?.owner!==profile.id)])?'changed':'readOnly';
+  const records=readEducationRecords();
+  state.status=records.issue!=='unavailable' && write(listingsKey,[row,...records.rows.filter(item=>item.owner!==profile.id)])?'changed':'readOnly';
   return true;
 }
 export function educationHistory(lang,profile) {
   const w=copy[lang];
-  const entries=saved(profile);
+  const {rows:entries,issue}=saved(profile);
+  const feedback=state.status==='readOnly'?w.readOnly:storageText[lang][issue];
   return `<section id="education-history" class="edu-history" aria-labelledby="edu-history-title"><h3 id="edu-history-title">${w.history}</h3>
+    ${feedback?`<p class="edu-notice" role="alert">${feedback}</p>`:''}
     ${entries.length?`<ul>${entries.map(row=>`<li><div><strong>${escape(tr(row.alias,lang))}</strong><span>${escape(tr(subjects[row.subject],lang))}${Number.isFinite(row.at)?' · '+scheduleTimestamp(lang,row.at,false):''}</span>${row.format?`<span>${helpWindowLabel(lang,row)}</span>`:''}</div>
     <button type="button" class="edu-button edu-button-neutral" data-action="edu-unsave" data-id="${escape(row.id)}">${w.undo}</button></li>`).join('')}</ul>`:`<p>${w.emptyHistory}</p>`}
   </section>`;

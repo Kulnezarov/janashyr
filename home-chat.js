@@ -2,6 +2,8 @@ import {sitePath} from './ui.js';
 import {escapeText} from './profiles.js';
 import {psychAvailability} from './support.js';
 import {donorAvailability} from './donor.js';
+import {routeHref} from './route-core.js';
+import {routeCopy} from './route-copy.js';
 
 const lifetime=4*60*60*1000;
 const key='janashyr.chat.current';
@@ -12,8 +14,8 @@ const parks=[
   {lat:42.30970,lon:69.63020,label:['Жеңіс саябағы','Парк Победы']}
 ];
 const copy={
-  kk:{title:'JANASHYR AI',open:'Чатты ашу',close:'Жабу',hello:'Сәлем! Сізге қандай көмек керек?',prompts:['Қан тапсырғым келеді','Жақын саябаққа маршрут','Сөйлескім келеді','Психологқа жазылу'],message:'Сұрағыңызды жазыңыз',send:'Жіберу',notice:'JANASHYR AI қателесуі мүмкін',expiry:'Чат 4 сағат сақталады',clear:'Диалогты тазарту',clearShort:'Тазарту',messageHint:'Сұрағыңыз',demo:'Демо көмекші',donor:'Бұл — Шымкенттегі демо кесте.',donorLink:'Жазылуға өту',psych:'Демо мамандардың келесі бос уақыттары.',psychLink:'Жазылуға өту',support:'Сізді тыңдауға дайынмын. Қазір сізге не қиын болып жүр? Қаласаңыз, бір сөйлемнен бастаңыз.',follow:'Жазғаныңызға рақмет. Қазір сізге көбірек не көмектесер еді: жай сөйлесу ме, әлде маман таңдау ма?',danger:'Егер өзіңізге не басқа адамға қазір қауіп төніп тұрса, жергілікті жедел қызметке хабарласыңыз және сенімді адамға айтыңыз.',route:'Шымкенттегі тізімнен ең жақын саябақты таңдау үшін геолокация қажет. Сыртқы карта арбаға арналған бағытты есептейді. Координаттар сілтемені ашқанда беріледі. Нақты қолжетімділік карта деректеріне байланысты.',locate:'Орналасқан жерімді анықтау',example:'Қала орталығынан мысал көрсету',exampleStatus:'Бұл — Шымкент орталығынан мысал. Орналасқан жеріңіз пайдаланылмайды.',locationFail:'Орналасқан жер анықталмады. Саябақты картадан өзіңіз таңдай аласыз.',outside:'Орналасқан жер Шымкенттен тыс. Алдымен қала картасын ашыңыз.',map:'Үлкен картаны ашу',sample:'Қолжетімді маршрут демосы',waiting:'Орналасқан жер анықталуда…',fallback:'Қан тапсыру, психологтың бос уақыттары, эмоционалдық қолдау немесе Шымкенттегі саябақ маршруты бойынша көмектесе аламын.'},
-  ru:{title:'JANASHYR AI',open:'Открыть чат',close:'Закрыть',hello:'Привет! Чем могу помочь?',prompts:['Хочу сдать кровь','Маршрут до ближайшего парка','Хочу поговорить','Записаться к психологу'],message:'Напишите свой вопрос',send:'Отправить',notice:'JANASHYR AI может ошибаться',expiry:'Чат сохраняется четыре часа',clear:'Очистить диалог',clearShort:'Очистить',messageHint:'Напишите вопрос',demo:'Демо-помощник',donor:'Это демонстрационные слоты в Шымкенте.',donorLink:'Перейти к записи',psych:'Ближайшие свободные окна демо-специалистов.',psychLink:'Перейти к записи',support:'Я готов вас выслушать. Что сейчас даётся труднее всего? Можно начать с одного предложения.',follow:'Спасибо, что поделились. Что сейчас помогло бы больше: просто поговорить или посмотреть, к какому специалисту можно обратиться?',danger:'Если вам или другому человеку сейчас угрожает опасность, обратитесь в местную экстренную службу и сообщите человеку, которому доверяете.',route:'Для выбора ближайшего парка из подборки Шымкента нужна геолокация. Внешняя карта построит маршрут с профилем для коляски. Координаты передаются ей при открытии ссылки. Доступность на месте зависит от данных карты.',locate:'Разрешить геолокацию',example:'Показать пример от центра',exampleStatus:'Это пример от центра Шымкента. Он не использует ваше местоположение.',locationFail:'Геолокация недоступна. Парк можно выбрать на карте вручную.',outside:'Вы находитесь за пределами Шымкента. Откройте карту города, чтобы посмотреть парки.',map:'Открыть большую карту',sample:'Демо доступного маршрута',waiting:'Определяем местоположение…',fallback:'Могу подсказать, где сдать кровь, показать время психологов, предложить эмоциональную поддержку или найти парк в Шымкенте.'}
+  kk:{title:'JANASHYR AI',open:'Чатты ашу',close:'Жабу',hello:'Сәлем! Сізге қандай көмек керек?',prompts:['Қан тапсырғым келеді','Жақын саябаққа маршрут','Сөйлескім келеді','Психологқа жазылу'],message:'Сұрағыңызды жазыңыз',send:'Жіберу',notice:'JANASHYR AI қателесуі мүмкін',expiry:'Чат 4 сағат сақталады',clear:'Диалогты тазарту',clearShort:'Тазарту',messageHint:'Сұрағыңыз',demo:'Демо көмекші',donor:'Бұл — Шымкенттегі демо кесте.',donorLink:'Жазылуға өту',psych:'Демо мамандардың келесі бос уақыттары.',psychLink:'Жазылуға өту',support:'Сізді тыңдауға дайынмын. Қазір сізге не қиын болып жүр? Қаласаңыз, бір сөйлемнен бастаңыз.',follow:'Жазғаныңызға рақмет. Қазір сізге көбірек не көмектесер еді: жай сөйлесу ме, әлде маман таңдау ма?',danger:'Егер өзіңізге не басқа адамға қазір қауіп төніп тұрса, жергілікті жедел қызметке хабарласыңыз және сенімді адамға айтыңыз.',route:'Шымкенттегі тізімнен ең жақын саябақты таңдау үшін геолокация қажет. Бағытты «Қолжетімді орта» бөлімінен ашыңыз. Есептеу кезінде нүктелер OpenRouteService қызметіне жіберіледі. Нақты қолжетімділік карта деректеріне байланысты.',locate:'Орналасқан жерімді анықтау',example:'Қала орталығынан мысал көрсету',exampleStatus:'Бұл — Шымкент орталығынан мысал. Орналасқан жеріңіз пайдаланылмайды.',locationFail:'Орналасқан жер анықталмады. Саябақты картадан өзіңіз таңдай аласыз.',outside:'Орналасқан жер Шымкенттен тыс. Алдымен қала картасын ашыңыз.',map:'Үлкен картаны ашу',sample:'Қолжетімді маршрут демосы',waiting:'Орналасқан жер анықталуда…',fallback:'Қан тапсыру, психологтың бос уақыттары, эмоционалдық қолдау немесе Шымкенттегі саябақ маршруты бойынша көмектесе аламын.'},
+  ru:{title:'JANASHYR AI',open:'Открыть чат',close:'Закрыть',hello:'Привет! Чем могу помочь?',prompts:['Хочу сдать кровь','Маршрут до ближайшего парка','Хочу поговорить','Записаться к психологу'],message:'Напишите свой вопрос',send:'Отправить',notice:'JANASHYR AI может ошибаться',expiry:'Чат сохраняется четыре часа',clear:'Очистить диалог',clearShort:'Очистить',messageHint:'Напишите вопрос',demo:'Демо-помощник',donor:'Это демонстрационные слоты в Шымкенте.',donorLink:'Перейти к записи',psych:'Ближайшие свободные окна демо-специалистов.',psychLink:'Перейти к записи',support:'Я готов вас выслушать. Что сейчас даётся труднее всего? Можно начать с одного предложения.',follow:'Спасибо, что поделились. Что сейчас помогло бы больше: просто поговорить или посмотреть, к какому специалисту можно обратиться?',danger:'Если вам или другому человеку сейчас угрожает опасность, обратитесь в местную экстренную службу и сообщите человеку, которому доверяете.',route:'Для выбора ближайшего парка из подборки Шымкента нужна геолокация. Откройте маршрут в разделе «Доступная среда». При расчёте точки передаются в OpenRouteService. Доступность на месте зависит от данных карты.',locate:'Разрешить геолокацию',example:'Показать пример от центра',exampleStatus:'Это пример от центра Шымкента. Он не использует ваше местоположение.',locationFail:'Геолокация недоступна. Парк можно выбрать на карте вручную.',outside:'Вы находитесь за пределами Шымкента. Откройте карту города, чтобы посмотреть парки.',map:'Открыть большую карту',sample:'Демо доступного маршрута',waiting:'Определяем местоположение…',fallback:'Могу подсказать, где сдать кровь, показать время психологов, предложить эмоциональную поддержку или найти парк в Шымкенте.'}
 };
 const shortPrompts={
   kk:['Қан тапсыру','Саябақ','Сөйлесу','Психолог'],
@@ -65,7 +67,6 @@ function send(input,render,fromPrompt=false){
   const target=fromPrompt && window.matchMedia('(pointer: coarse)').matches?'.home-chat-log':'#home-chat-input';
   document.querySelector(target)?.focus({preventScroll:true});
 }
-const external=(url,label)=>`<a href="${escapeText(url)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
 function renderReply(kind,lang,w){
   const inner=(href,label)=>`<a href="${href}" data-link>${label}</a>`;
   if(kind==='donor'||kind==='psych'){
@@ -76,12 +77,10 @@ function renderReply(kind,lang,w){
     return `<p>${w[kind]}</p>${slots.length?`<ul class="home-chat-slots">${slots.map(slot=>`<li>${escapeText(slot)}</li>`).join('')}</ul>`:''}<a class="home-chat-result-link" href="${href}" data-link>${label}</a>`;
   }
   if(kind==='route'){
-    const fallback='https://www.openstreetmap.org/#map=13/42.341/69.612';
-    const map=route
-      ? external(route.url,route.name[lang==='kk'?0:1]+' · '+w.map)
-      : external(fallback,w.map);
+    const path=route?routeHref({start:route.start,end:route.end,from:routeCopy[lang].homeExample,to:route.name[lang==='kk'?0:1]}):'/directions/accessibility/map?markers=1';
+    const map=inner(path,route?route.name[lang==='kk'?0:1]+' · '+w.map:w.map);
     return `<p>${w.route}</p><p>${locationState?escapeText(w[locationState]):''}</p>
-      <div class="home-chat-reply-links"><button type="button" class="button secondary" data-action="home-ai-locate" ${locationState==='waiting'?'disabled':''}>${w.locate}</button><button type="button" class="text-button" data-action="home-ai-route-example">${w.example}</button>${map}${inner('/directions/accessibility/map',w.sample)}</div>`;
+      <div class="home-chat-reply-links"><button type="button" class="button secondary" data-action="home-ai-locate" ${locationState==='waiting'?'disabled':''}>${w.locate}</button><button type="button" class="text-button" data-action="home-ai-route-example">${w.example}</button>${map}</div>`;
   }
   return `<p>${w[kind]||w.fallback}</p>`;
 }
@@ -90,7 +89,7 @@ export function renderHomeChat(lang){
   const hasMessages=turns.length>0;
   return `<div class="home-chat-widget${opened?' is-open':''}">
     ${opened?`<section class="home-chat-panel" id="home-chat-panel" role="dialog" aria-modal="true" aria-labelledby="home-chat-title">
-      <header><div class="home-chat-identity"><img src="/assets/care-logo.png" alt="" width="35" height="35"><div><h2 id="home-chat-title">${w.title}</h2><p>${w.demo}</p></div></div><div><button class="text-button" type="button" data-action="home-ai-clear" ${hasMessages||draft?'':'hidden'} aria-label="${w.clear}"><span class="chat-clear-full">${w.clear}</span><span class="chat-clear-short">${w.clearShort}</span></button><button class="home-chat-close" type="button" data-action="home-ai-toggle" aria-label="${w.close}">×</button></div></header>
+      <header><div class="home-chat-identity"><img src="/assets/care-logo.webp" alt="" width="35" height="35"><div><h2 id="home-chat-title">${w.title}</h2><p>${w.demo}</p></div></div><div><button class="text-button" type="button" data-action="home-ai-clear" ${hasMessages||draft?'':'hidden'} aria-label="${w.clear}"><span class="chat-clear-full">${w.clear}</span><span class="chat-clear-short">${w.clearShort}</span></button><button class="home-chat-close" type="button" data-action="home-ai-toggle" aria-label="${w.close}">×</button></div></header>
       <div class="home-chat-log${hasMessages?'':' is-empty'}" role="log" aria-live="polite" tabindex="0">${hasMessages?'':`<p class="home-chat-greeting">${w.hello}</p>`}
       ${turns.map(({message,kind},index)=>`<article class="home-chat-turn"><p class="home-chat-user">${escapeText(message)}</p><div class="home-chat-reply">${kind==='route' && index!==chat.turns.findLastIndex(t=>t.kind==='route')?`<p>${w.route}</p>`:renderReply(kind,lang,w)}</div></article>`).join('')}</div>
       ${hasMessages?'':`<div class="home-chat-prompts" ${draft.trim()?'hidden':''}>${w.prompts.map((prompt,i)=>`<button type="button" data-action="home-ai-prompt" data-id="${i}" aria-label="${prompt}">${shortPrompts[lang][i]}</button>`).join('')}</div>`}
@@ -105,12 +104,7 @@ export function renderHomeChat(lang){
 function parkRoute(lat,lon){
   const distance=p=>((p.lat-lat)**2)+(((p.lon-lon)*Math.cos(lat*Math.PI/180))**2);
   const park=[...parks].sort((a,b)=>distance(a)-distance(b))[0];
-  const url=new URL('https://classic-maps.openrouteservice.org/directions');
-  url.searchParams.set('a',[lat.toFixed(5),lon.toFixed(5),park.lat,park.lon].join(','));
-  url.searchParams.set('b','3');
-  url.searchParams.set('c','0');
-  url.searchParams.set('k2','km');
-  return {name:park.label,url:url.href};
+  return {name:park.label,start:[lon,lat],end:[park.lon,park.lat]};
 }
 export function homeChatAction(action,id,lang,render){
   if(action==='home-ai-toggle'){

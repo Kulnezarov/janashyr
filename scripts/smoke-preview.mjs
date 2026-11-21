@@ -5,6 +5,7 @@ import {join} from 'node:path';
 
 const require = createRequire(import.meta.url);
 const base = new URL(process.argv[2] || 'http://localhost:3000');
+const previewHref = path => base.pathname.replace(/\/$/, '') + path;
 if (!['localhost','127.0.0.1','[::1]'].includes(base.hostname)) {
   throw new Error('The smoke test accepts only a local preview URL.');
 }
@@ -49,7 +50,7 @@ try {
   page.on('pageerror',error=>errors.push(error.message));
 
   async function open(path, marker) {
-    const target=new URL(path,base).href;
+    const target=new URL(previewHref(path),base).href;
     const response = await page.goto(target,{waitUntil:'domcontentloaded'});
     assert.ok(response?response.ok():page.url()===target,`HTTP failed for ${path}: ${response?.status()}`);
     await page.locator(marker).first().waitFor({state:'visible',timeout:5000});
@@ -79,7 +80,7 @@ try {
   async function selectProfile(role) {
     await open('/login','.profile-pick');
     await page.locator(`[data-action="profile-select"][data-id="preview-${role}"]`).click();
-    await page.waitForURL(new URL('/account',base).href);
+    await page.waitForURL(new URL(previewHref('/account'),base).href);
     await page.locator('.profile-lead h1').waitFor();
   }
   for(const role of ['volunteer','psychologist','teacher','learner','pensioner','helper']) await selectProfile(role);
@@ -88,7 +89,7 @@ try {
   await page.locator('#profile-create-form input[name="alias"]').fill('E2E Demo');
   await page.locator('#profile-create-form select[name="role"]').selectOption('pensioner');
   await page.locator('#profile-create-form button[type="submit"]').click();
-  await page.waitForURL(new URL('/account',base).href);
+  await page.waitForURL(new URL(previewHref('/account'),base).href);
   assert.equal(await page.locator('.profile-lead h1').textContent(),'E2E Demo');
   await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('.profile-lead h1').waitFor();
@@ -183,7 +184,11 @@ try {
   await selectProfile('volunteer');
   await open('/account#support-account','#support-account');
   assert.equal(await page.locator('#support-account .request-card').count(),0);
-  await open('/directions/accessibility/admin','.access-workspace');
+  await page.evaluate(path=>{
+    history.pushState({},'',path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  },previewHref('/directions/accessibility/admin'));
+  await page.locator('.access-workspace').waitFor();
   assert.equal(await page.locator('.admin-controls').count(),0);
   await open('/directions/accessibility/map','[data-action="access-save"]');
   await page.locator('[data-action="access-save"]').click();
@@ -208,50 +213,82 @@ try {
 
   await open('/directions/city','[data-action="cleanup-join"]');
   await page.locator('[data-action="cleanup-join"]').first().click();
+  await page.locator('#city-activity-dialog [data-action="cleanup-confirm"]').click();
   await page.locator('[data-action="cleanup-leave"]').first().waitFor();
   await open('/account','[aria-labelledby="next-booking"] a');
-  const cityEntry=page.locator('#active-requests').locator('xpath=..').locator('a[href="/account#profile-cleanup"]');
+  const cityEntry=page.locator('#active-requests').locator('xpath=..').locator('a[href="'+previewHref('/account#profile-cleanup')+'"]');
   assert.equal(await cityEntry.locator('strong').textContent(),'1');
   await cityEntry.click();
   await page.locator('#profile-cleanup [data-action="cleanup-leave"]').waitFor();
 
-  await open('/directions/donation','[data-action="donor-hub-slot"]');
-  await page.locator('#donor-hub-search').fill('442');
-  await page.locator('.donor-center-address').waitFor();
-  await page.locator('[data-action="donor-hub-slot"]:enabled').first().click();
-  await page.locator('#donor-hub-consent').check();
-  await page.locator('[data-action="donor-hub-book"]').click();
-  await page.locator('.donor-hub-success').waitFor();
+  await open('/directions/donation','#donor-assessment');
+  await page.locator('#donor-assessment [name="age"]').fill('30');
+  await page.locator('#donor-assessment [name="weight"]').fill('65');
+  await page.locator('#donor-assessment [name="unwell"][value="no"]').check();
+  await page.locator('#donor-assessment button[type="submit"]').click();
+  for(const field of ['illness','antibiotics','tattoo','vaccination','pregnancy'])
+    await page.locator('#donor-assessment [name="'+field+'"][value="no"]').check();
+  await page.locator('#donor-assessment button[type="submit"]').click();
+  await page.locator('#donor-assessment button[type="submit"]').click();
+  await page.locator('[data-center="demo-abai"] [data-action="donor-center-select"]').click();
+  await page.locator('[data-action="donor-visit-time"]:enabled').first().click();
+  await page.locator('[data-action="donor-visit-review"]').click();
+  await page.locator('[data-action="donor-visit-book"]').click();
+  await page.locator('.donor-ticket-qr').waitFor();
   await open('/account#donation','#donation .request-card');
 
   await open('/','.home-chat-launcher');
   await page.clock.install();
   await page.locator('.home-chat-launcher').click();
   await page.locator('[data-action="home-ai-prompt"][data-id="0"]').click();
-  await page.locator('#home-chat-panel a[href="/directions/donation#donor-booking"]').waitFor();
+  await page.locator('#home-chat-panel a[href="'+previewHref('/directions/donation#donor-booking')+'"]').waitFor();
   assert.equal(await page.locator('.home-chat-prompts').count(),0);
   const input=page.locator('#home-chat-input');
   await input.fill('Хочу записаться к психологу');
   await input.press('Enter');
-  await page.locator('#home-chat-panel a[href="/directions/support/psychology#psych-clinicians"]').waitFor();
+  await page.locator('#home-chat-panel a[href="'+previewHref('/directions/support/psychology#psych-clinicians')+'"]').waitFor();
   await input.fill('Маршрут до ближайшего парка');
   await input.press('Enter');
   await page.locator('[data-action="home-ai-locate"]').click();
-  await page.locator('.home-chat-panel a[href*="openstreetmap.org/#map"]').waitFor();
+  await page.locator('.home-chat-panel a[href*="/directions/accessibility/map?markers=1"]').waitFor();
   await page.locator('[data-action="home-ai-route-example"]').click();
-  await page.locator('.home-chat-panel a[href*="openrouteservice.org"]').waitFor();
+  await page.locator('.home-chat-panel a[href*="/directions/accessibility/map?start="]').waitFor();
   await page.evaluate(() => {
     navigator.geolocation.getCurrentPosition = success => queueMicrotask(() => success({coords:{latitude:42.326,longitude:69.586}}));
   });
   await page.locator('[data-action="home-ai-locate"]').click();
-  const routeLink=page.locator('.home-chat-panel a[href*="openrouteservice.org"]');
+  const routeLink=page.locator('.home-chat-panel a[href*="/directions/accessibility/map?start="]');
   await routeLink.waitFor({timeout:10000});
-  const routeUrl=new URL(await routeLink.getAttribute('href'));
-  assert.equal(routeUrl.searchParams.get('b'),'3');
-  assert.match(routeUrl.searchParams.get('a'),/42.32541,69.58573$/);
+  const routeUrl=new URL(await routeLink.getAttribute('href'),base);
+  assert.equal(routeUrl.searchParams.get('auto'),'1');
+  assert.equal(routeUrl.searchParams.get('end'),'69.58573,42.32541');
   assert.equal(await page.locator('.home-chat-turn').count(),3);
   await page.clock.fastForward('04:00:01');
   assert.equal(await page.locator('.home-chat-turn').count(),0);
+
+  await selectProfile('volunteer');
+  const reset=page.locator('[data-action="demo-reset-open"]');
+  const resetDialog=page.locator('#demo-reset-dialog[open]');
+  await page.evaluate(()=>{
+    localStorage.setItem('another-project.local','keep');
+    sessionStorage.setItem('another-project.session','keep');
+    sessionStorage.setItem('janashyr.route.v1:demo-smoke','temporary');
+  });
+  await reset.click();
+  await resetDialog.waitFor();
+  await page.keyboard.press('Escape');
+  await resetDialog.waitFor({state:'detached'});
+  await reset.evaluate(button=>{
+    if(button!==document.activeElement)throw new Error('Reset did not restore focus');
+  });
+  assert.equal(await page.evaluate(()=>sessionStorage.getItem('janashyr.route.v1:demo-smoke')),'temporary');
+  await reset.click();
+  await resetDialog.locator('[data-action="demo-reset-confirm"]').click();
+  await page.locator('#demo-reset-success').waitFor();
+  for(const role of ['volunteer','psychologist','teacher','learner','pensioner','helper'])
+    await page.locator('.profile-pick[data-id="preview-'+role+'"]').waitFor();
+  assert.deepEqual(await page.evaluate(()=>[Object.keys(localStorage).sort(),Object.keys(sessionStorage).sort()]),
+    [['another-project.local'],['another-project.session']]);
 
   assert.deepEqual(errors,[],'Browser runtime errors');
   console.log('Desktop smoke passed: navigation, languages, six demo roles, profile creation and reload, student search and tutoring, volunteer availability and targeted requests, psychologist schedule and booking, accessible routes and all four forms, cleanup, donor history, chat replies, geolocation and expiry.');
