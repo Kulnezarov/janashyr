@@ -1,5 +1,5 @@
 import {escapeText as e,storageText} from './profiles.js';
-import {pageShell,scheduleTimestamp} from './ui.js';
+import {pageShell,scheduleTimestamp,demoSaveNote} from './ui.js';
 import {mapEmbedUrl} from './landing-sections.js';
 import {districts,newCityId,updateCity} from './city-participation.js';
 import {reportCategories,reportStatuses,readCityReports,reportPoint,demoReports,validateReport,validateReportPhoto,
@@ -17,7 +17,7 @@ const copy={
     north:'Солтүстік бөлік',center:'Орталық бөлік',south:'Оңтүстік бөлік',removePoint:'Белгіні алып тастау',
     photo:'Фото (міндетті емес, 5 МБ-қа дейін)',photoHint:'Фото тек осы жерде алдын ала көрсетіледі және тарихқа сақталмайды.',
     photoPreview:'Таңдалған суретті алдын ала көрсету',removePhoto:'Фотоны алып тастау',photoChecking:'Сурет тексерілуде…',
-    submit:'Демо өтініш жіберу',busy:'Сақталуда…',sent:'Демо өтініш сақталды. Нөмірі',advanced:'Өтініш мәртебесі жаңартылды.',
+    submit:'Демо өтінішті сақтау',busy:'Сақталуда…',sent:'Демо өтініш сақталды. Нөмірі',advanced:'Өтініш мәртебесі жаңартылды.',
     advance:'Мәртебені өзгерту',filter:'Көрсету',status:'Мәртебе',empty:'Бұл сүзгі бойынша өтініштер жоқ.',noDistrict:'Аудан бұрын көрсетілмеген',
     categoryRequired:'Мәселенің санатын таңдаңыз.',districtRequired:'Шымкент ауданын таңдаңыз.',
     descriptionShort:'Кемінде 10 таңба енгізіңіз.',descriptionLong:'Сипаттама 500 таңбадан аспауы керек.',
@@ -33,7 +33,7 @@ const copy={
     north:'Северная часть',center:'Центральная часть',south:'Южная часть',removePoint:'Убрать метку',
     photo:'Фото (необязательно, до 5 МБ)',photoHint:'Фото доступно только в предпросмотре и не сохраняется в истории.',
     photoPreview:'Предпросмотр выбранного изображения',removePhoto:'Удалить фото',photoChecking:'Проверяем изображение…',
-    submit:'Отправить демо-обращение',busy:'Сохраняем…',sent:'Демо-обращение сохранено. Номер',advanced:'Статус обращения обновлён.',
+    submit:'Сохранить демо-обращение',busy:'Сохраняем…',sent:'Демо-обращение сохранено. Номер',advanced:'Статус обращения обновлён.',
     advance:'Продвинуть статус',filter:'Показать',status:'Статус',empty:'Обращений по этому фильтру нет.',noDistrict:'Район раньше не указывался',
     categoryRequired:'Выберите категорию проблемы.',districtRequired:'Выберите район Шымкента.',
     descriptionShort:'Введите не менее 10 символов.',descriptionLong:'Описание должно быть не длиннее 500 символов.',
@@ -128,6 +128,7 @@ export function renderReportForm(lang,profile) {
         ${photo?`<img src="${e(photo)}" alt="${w.photoPreview}">`:''}
         ${photo || errors.photo || checkingPhoto?button(w.removePhoto,'report-photo-remove'):''}
       </div>
+      ${demoSaveNote(lang)}
       <button class="button primary" type="submit"${busy || checkingPhoto?' disabled':''}>${busy?w.busy:w.submit}</button>
     </form>
     <details class="guide city-past"><summary>${w.examples}</summary>${demoReports().map(report=>card(lang,report)).join('')}</details>

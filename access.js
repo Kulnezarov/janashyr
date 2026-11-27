@@ -1,5 +1,5 @@
 import {scheduleTimestamp,helpText,helpWindowLabel,readHelpWindow,renderHelpWindowFields} from './ui.js';
-import {pageShell,demoNotice} from './ui.js';
+import {pageShell,demoNotice,demoSaveNote} from './ui.js';
 import {readLocalObject,writeLocalObject,storageText} from './profiles.js';
 import {routeCopy} from './route-copy.js';
 import {parseCoordinate} from './route-core.js';
@@ -78,7 +78,7 @@ function mapPage(t,lang){
 }
 function formPage(t,type,lang){
   const kk=lang==='kk';
-  const guest=kk?'Кабинетке сақтау үшін өтінімді жібермей тұрып кіріңіз. Қонақ өтінімі осы бетте ғана қолжетімді.':'Чтобы сохранить заявку в кабинете, войдите до отправки. Гостевая заявка доступна только в этой сессии.';
+  const guest=kk?'Өтінімді кабинетте сақтау үшін демо профильге кіріңіз. Қонақ режиміндегі өтінім осы бетте ғана қолжетімді.':'Для сохранения заявки в кабинете войдите в демо-профиль. В гостевом режиме она доступна только на этой странице.';
   const rc=routeCopy[lang];
   const content=type==='obstacle'?`${state.obstacleCoordinates
     ?`<p>${rc.pointChosen} · ${state.obstacleCoordinates.slice().reverse().join(', ')}</p>`
@@ -94,6 +94,7 @@ function formPage(t,type,lang){
       <form id="access-form" data-type="${type}" class="access-form" novalidate>
         <div class="access-fields">${fields[type].map(name=>field(name,t,type,lang)).join('')}</div>
         ${type==='volunteer'?`<div class="help-window-fields access-help-window">${renderHelpWindowFields(lang,state.draft.accessHelpWindow,true)}</div>`:''}
+        ${accessProfileId?demoSaveNote(lang):`<p class="demo-action-note">${kk?'Демо өтінім ешқайда жіберілмейді.':'Демо-заявка никуда не отправляется.'}</p>`}
         <button class="button primary" type="submit">${t.submit}</button>
       </form>
     </section></div>`);

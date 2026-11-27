@@ -1,5 +1,5 @@
 import {readLocal,writeLocal,profileName} from './profiles.js';
-import {scheduleTimestamp,helpText,helpWindowLabel,readHelpWindow,renderHelpWindowFields} from './ui.js';
+import {scheduleTimestamp,helpText,helpWindowLabel,readHelpWindow,renderHelpWindowFields,demoSaveNote} from './ui.js';
 import {guides as existingGuides} from './support-content.js';
 
 const route = '/directions/support/digital';
@@ -24,7 +24,7 @@ const strings = {
       ['Подготовка к видеозвонку','Проверьте, подключён ли телефон к интернету.','Откройте знакомое приложение связи и выберите человека, которому хотите позвонить.','Начните видеозвонок. Если вас не видно или не слышно, проверьте кнопки камеры и микрофона на экране.']
     ],
     help:'Помощь с цифровыми задачами', demo:'Учебный режим. Заявки остаются в этом браузере.',
-    ask:'Попробуйте отправить заявку по одной из тем.',
+    ask:'Выберите тему и попробуйте создать демо-заявку.',
     helper:'Возьмите учебную заявку и отметьте её завершение после демонстрации.',
     guest:'Демо-профиль позволяет попробовать отправить заявку или взять её в работу.',
     other:'Для заявки выберите профиль пенсионера. Для ответа подойдёт профиль помощника или волонтёра.',
@@ -50,7 +50,7 @@ const strings = {
       ['Бейнеқоңырауға дайындық','Телефонның интернетке қосылғанын тексеріңіз.','Өзіңізге таныс байланыс қолданбасын ашып, қоңырау шалатын адамды таңдаңыз.','Бейнеқоңырауды бастаңыз. Сізді көрмесе немесе естімесе, экрандағы камера мен микрофон батырмаларын тексеріңіз.']
     ],
     help:'Цифрлық істерге көмек', demo:'Оқу режимі. Өтінімдер осы браузерде қалады.',
-    ask:'Бір тақырып бойынша өтінім жіберіп көріңіз.',
+    ask:'Тақырыпты таңдап, демо өтінім жасап көріңіз.',
     helper:'Оқу өтінімін қабылдап, көрсетілімнен кейін оны аяқталған деп белгілеңіз.',
     guest:'Демо профиль өтінім жіберіп, оны жұмысқа қабылдап көруге мүмкіндік береді.',
     other:'Өтінім беру үшін зейнеткер профилін таңдаңыз. Жауап беру үшін көмекші немесе ерікті профилі жарайды.',
@@ -173,6 +173,7 @@ function helpDesk(w,profile,lang) {
         </select>
         ${selected?`<p class="help-selected-window">${escapeHtml(helpWindowLabel(lang,selected))}</p>`: ''}
         <a href="#digital-volunteers">${volunteerText[lang].heading}</a>
+        ${demoSaveNote(lang)}
         <button class="button primary" type="submit">${w.send}</button>
       </form>
       <h3>${w.active}</h3>${mine.length?`<ul class="digital-tickets">${mine.map(item=>requestCard(item,w,profile,lang)).join('')}</ul>`:`<p>${w.noActive}</p>`}`;

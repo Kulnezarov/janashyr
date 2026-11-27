@@ -1,6 +1,6 @@
 import {sitePath} from './ui.js';
 import {scheduleTimestamp} from './ui.js';
-import {pageShell,demoNotice} from './ui.js';
+import {pageShell,demoNotice,demoSaveNote} from './ui.js';
 import {donorText as texts,cities,shymkentBloodCenter,donorHubText} from './donor-content.js';
 import {storageText,writeStored} from './profiles.js';
 import {readDonorHistory,donorStorageKey,donorStatus,updateDonor} from './donor-booking-data.js';
@@ -42,6 +42,7 @@ function home(t,lang) {
     <section class="donor-hero photo-hero photo-hero-bleed">
       <div class="donor-hero-copy"><a class="back" href="/" data-link>${t.back}</a><p class="donor-small-label">${h.city} / ${t.title}</p><h1>${h.headline}</h1><p>${h.intro}</p>
         <div class="donor-hero-actions"><a class="button donor-submit" href="#donor-booking">${t.become}</a><a class="donor-hero-link" href="#donor-center-search">${t.centers}</a></div>
+        ${demoSaveNote(lang)}
       </div>
     </section>
     <div class="donor-hub-layout" aria-label="${h.demoProgress}">

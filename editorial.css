@@ -21,6 +21,8 @@
 
 .site ::selection { color: #302238; background: #ead8ed; }
 .site input, .site textarea { caret-color: var(--release-plum); }
+.site .demo-action-note { margin: 12px 0 6px; color: var(--release-muted); font-size: .875rem; }
+.site .donor-hero .demo-action-note { margin: 12px 0 0; font-size: .875rem; }
 .site .header .login { box-shadow: none; }
 .site .site-footer { background: #2e2438; }
 .site .site-footer a:hover { text-decoration: underline; text-underline-offset: .24em; }
@@ -452,14 +454,14 @@
   font: 560 clamp(1.35rem,4vw,1.65rem)/1.12 var(--display-type);
 }
 .home-chat-welcome-copy { margin: 0 0 16px; color: var(--release-muted); font-size: .95rem; }
-.home-chat-panel .home-chat-welcome .home-chat-prompts {
+.home-chat-panel :is(.home-chat-welcome,.home-chat-reply) .home-chat-prompts {
   display: grid;
   grid-template-columns: repeat(2,minmax(0,1fr));
   gap: 8px;
   padding: 0;
   overflow: visible;
 }
-.home-chat-panel .home-chat-welcome .home-chat-prompts button {
+.home-chat-panel :is(.home-chat-welcome,.home-chat-reply) .home-chat-prompts button {
   min-height: 46px;
   padding: 7px 10px;
   border-radius: 8px;
@@ -470,6 +472,9 @@
   font-size: .88rem;
 }
 .home-chat-panel .home-chat-prompts button:hover { background: #eddfef; }
+.home-chat-panel .home-chat-reply .home-chat-prompts { margin-top: 10px; }
+.home-chat-panel .home-chat-reply details { margin: 3px 0 8px; }
+.home-chat-panel .home-chat-reply summary { min-height: 44px; padding-block: 10px; cursor: pointer; }
 .home-chat-panel .home-chat-user { background: #e9def0; color: #382544; }
 .home-chat-panel .home-chat-reply {
   justify-self: start;

@@ -40,7 +40,7 @@ const psychWords = {
     topics:{stress:'Мазасыздық пен стресс',fear:'Қорқыныш',burnout:'Эмоциялық қажу',crisis:'Дағдарыс кезіндегі қолдау',lonely:'Жалғыздық сезімі'},
     title:'Демо мамандар', demo:'Мамандар мен олардың кестелері үлгі ретінде берілген.',
     filters:'Мамандық бойынша', all:'Барлық мамандар', helps:'Қандай мәселелермен жұмыс істейді', years:n=>`${n} жыл тәжірибе`,
-    book:'Жазылу', survey:'Неден бастаймын?', question:'Сізге қандай тақырып бойынша қолдау керек?', suggest:'Мамандарды көрсету',
+    book:'Демо жазылу', survey:'Неден бастаймын?', question:'Сізге қандай тақырып бойынша қолдау керек?', suggest:'Мамандарды көрсету',
     noMatch:'Бұл сүзгіге сай маман табылмады.', reset:'Сүзгіні тазарту', schedule:'Қабылдау кестесі', zone:'Шымкент уақыты · Келесі 7 күн',
     day:'Күн', time:'Уақыт', taken:'Бос емес', confirm:'Демо жазылуды растау', invalid:'Бұл уақыт бос емес немесе өтіп кеткен. Басқа уақытты таңдаңыз.',
     intro:'Мазасыздық, стресс немесе қиын кезең кезінде қолдау іздесеңіз, осында маман таңдау мен жазылуды байқап көре аласыз.',
@@ -53,7 +53,7 @@ const psychWords = {
     topics:{stress:'Тревога и стресс',fear:'Страхи',burnout:'Эмоциональное выгорание',crisis:'Поддержка в кризисе',lonely:'Чувство одиночества'},
     title:'Демо-специалисты', demo:'Профили и расписания приведены для примера.',
     filters:'Специальность', all:'Все специалисты', helps:'С чем помогает', years:n=>`${n} ${n===2?'года':'лет'} опыта`,
-    book:'Записаться', survey:'С чего начать?', question:'С каким вопросом вы хотите получить поддержку?', suggest:'Показать специалистов',
+    book:'Демо-запись', survey:'С чего начать?', question:'С каким вопросом вы хотите получить поддержку?', suggest:'Показать специалистов',
     noMatch:'По этому фильтру специалисты не найдены.', reset:'Сбросить фильтры', schedule:'Расписание консультаций', zone:'Время Шымкента · Следующие 7 дней',
     day:'Дата', time:'Время', taken:'Занято', confirm:'Подтвердить демо-запись', invalid:'Время занято или уже прошло. Выберите другое.',
     intro:'Если вы ищете поддержку в сложный период, здесь можно попробовать выбрать специалиста и записаться на консультацию.',
@@ -114,6 +114,7 @@ function booking(t, lang, person) {
         }).join('')}</div></td></tr>`).join('')}</tbody>
       </table>
       <p class="psych-booking-error" role="alert">${state.bookingError==='storage'?storageText[lang].saveFailed:state.bookingError?w.invalid:''}</p>
+      <p class="demo-action-note">${w.local}</p>
       ${button(w.confirm,'type="submit" id="consult-submit"')}
     </form>`}
   </dialog>`;
@@ -142,7 +143,7 @@ function psych(t, lang) {
         <div class="psych-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${supportIconPath}</svg><h1>${t.psych}</h1></div>
         <p>${w.intro}</p>
         <div class="psych-hero-actions">
-          <a class="button psych-cta" href="#psych-clinicians">${kk?'Маман таңдау':'Выбрать специалиста'}</a>
+          <a class="button psych-cta" href="#psych-clinicians">${kk?'Демо маман таңдау':'Выбрать демо-специалиста'}</a>
           <a class="button secondary" href="#psych-reflection">${w.survey}</a>
         </div>
         <p class="psych-demo-caption">${w.local}</p>

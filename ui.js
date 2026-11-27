@@ -5,6 +5,10 @@ export function pageShell({base,back,kicker,title,body}){
   </header>${body}</main>`;
 }
 export function demoNotice(message){return `<div class="demo-notice" role="note">${message}</div>`}
+export function demoSaveNote(lang){
+  const text=lang==='kk'?'Бұл — демо әрекет. Деректер осы браузерде ғана сақталады.':'Это демо-действие. Данные сохраняются только в этом браузере.';
+  return `<p class="demo-action-note">${text}</p>`;
+}
 
 /** Schedule labels use project translations even on browsers without Kazakh calendar data. */
 const scheduleWords={

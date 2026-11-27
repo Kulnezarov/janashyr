@@ -1,5 +1,5 @@
 import {escapeText as e,storageText} from './profiles.js';
-import {scheduleDate} from './ui.js';
+import {scheduleDate,demoSaveNote} from './ui.js';
 import {mapEmbedUrl} from './landing-sections.js';
 import {renderTicketQr} from './donor-qr.js';
 import {assessmentRules,assessmentFields,assessmentSteps,assessDonation,validAssessmentStep,bloodGroups,donorCenters,donorCenter,
@@ -217,6 +217,7 @@ export function renderDonationFlow(lang,profileId) {
     body=`<h3>${w.review}</h3><p><strong>${center.name[lang]}</strong> · ${center.address[lang]}</p>
       <p>${visitTime(lang,{date:draft.day,time:draft.time})} · ${center.duration} ${w.minutes}</p>
       ${(draft.group ?? donorBloodGroup(rows))?`<p>${w.group} · ${e(draft.group ?? donorBloodGroup(rows))}</p>`:''}
+      ${demoSaveNote(lang)}
       <div class="donor-choice-row">${button(w.back,'donor-visit-edit')}${button(w.submit,'donor-visit-book','','button donor-submit',busy)}</div>`;
   }else body=`<p class="success" role="status" data-assessment="eligible">${w.eligible}</p>${picker(lang,rows)}${button(w.restart,'donor-assessment-reset')}`;
   return `<section class="donor-hub-booking" id="donor-booking" aria-labelledby="donor-hub-booking-title">

@@ -1,5 +1,5 @@
 import {escapeText as e,getProfiles,profileName,storageText} from './profiles.js';
-import {helpPlace,scheduleDate,scheduleTimestamp} from './ui.js';
+import {helpPlace,scheduleDate,scheduleTimestamp,demoSaveNote} from './ui.js';
 import {subjects,formats,lessonToday,lessonStart,lessonEnd,lessonState,availableLessons,
   lessonRating,lessonNotifications,changeLesson,updateEducation} from './education-data.js';
 
@@ -9,7 +9,7 @@ const copy = {
     schedule:'Менің сабақ кестем',requests:'Өтінімдер',students:'Менің оқушыларым',mine:'Менің жазбаларым',
     subject:'Пән',format:'Формат',date:'Күні',time:'Басталу уақыты',duration:'Ұзақтығы (минут)',minutes:'мин',
     place:'Кездесу орны',library:'Демо кітапхана',community:'Демо қауымдастық орталығы',link:'Демо сілтеме',
-    add:'Сабақ уақытын қосу',remove:'Жою',free:'Бос',occupied:'Бос емес',book:'Жазылу',any:'Барлығы',
+    add:'Сабақ уақытын қосу',remove:'Жою',free:'Бос',occupied:'Бос емес',book:'Демо жазылу',any:'Барлығы',
     filter:'Көрсету',reset:'Сүзгілерді тазарту',empty:'Сәйкес сабақ уақыты табылмады',back:'Сабақтар кестесін ашу',
     noSchedule:'Сабақ уақыты әлі қосылмаған.',noRequests:'Жаңа өтінімдер жоқ.',noStudents:'Расталған жазбалар жоқ.',
     noBookings:'Сабаққа жазбалар әлі жоқ.',noReviews:'Пікірлер әлі жоқ',rating:'Рейтинг',reviews:'Пікір саны',
@@ -36,7 +36,7 @@ const copy = {
     schedule:'Моё расписание',requests:'Заявки',students:'Мои ученики',mine:'Мои записи',
     subject:'Предмет',format:'Формат',date:'Дата',time:'Время начала',duration:'Длительность (минуты)',minutes:'мин',
     place:'Место встречи',library:'Демо-библиотека',community:'Демо-центр сообщества',link:'Ссылка-заглушка',
-    add:'Добавить слот',remove:'Удалить',free:'Свободен',occupied:'Занят',book:'Записаться',any:'Все',
+    add:'Добавить слот',remove:'Удалить',free:'Свободен',occupied:'Занят',book:'Записаться в демо',any:'Все',
     filter:'Показать',reset:'Сбросить фильтры',empty:'Нет подходящих слотов',back:'Открыть каталог занятий',
     noSchedule:'Свободное время ещё не добавлено.',noRequests:'Новых заявок нет.',noStudents:'Подтверждённых записей нет.',
     noBookings:'Записей на занятия пока нет.',noReviews:'Отзывов пока нет',rating:'Рейтинг',reviews:'Число отзывов',
@@ -245,6 +245,7 @@ export function renderLessonDialog(lang,profile) {
       ${notice(lang,feedback)}
       <form id="lesson-dialog-form" class="lesson-fields">
         ${fields[kind]}
+        ${kind==='book'?demoSaveNote(lang):''}
         <div class="lesson-actions"><button type="submit" class="button primary"${state.busy?' disabled':''}>${state.busy?w.busy:labels[kind]}</button>
           ${button(w.close,'lesson-close')}</div>
       </form>`;

@@ -1,4 +1,4 @@
-import {scheduleDate} from './ui.js';
+import {scheduleDate,demoSaveNote} from './ui.js';
 import {escapeText as e,storageText} from './profiles.js';
 import {districts,activityTypes,activityStart,readParticipation,cityActivities,filterActivities,participationFor,changeParticipation,helpMinutes,updateCity} from './city-participation.js';
 
@@ -9,8 +9,8 @@ const copy={
     demo:'Бұл — демонстрациялық деректер. Акциялар, қатысушылар және орындар шартты.',district:'Аудан',type:'Акция түрі',date:'Күні',
     all:'Барлығы',apply:'Көрсету',reset:'Сүзгілерді тазарту',upcoming:'Алдағы акциялар',past:'Өткен акциялар',
     my:'Менің акцияларым',hours:'Көмек сағаттары',empty:'Таңдалған шарттар бойынша акция табылмады.',
-    noPast:'Өткен акциялар әзірге жоқ.',noMine:'Қатысу жазбалары әзірге жоқ.',report:'Мәселе туралы хабарлау',map:'Демо карта',otherEvents:'Басқа демо іс-шаралар',
-    joined:'Жазылдыңыз',join:'Жазылу',leave:'Қатысудан бас тарту',full:'Орын жоқ',wait:'Күту тізіміне қосылу',
+    noPast:'Өткен акциялар әзірге жоқ.',noMine:'Қатысу жазбалары әзірге жоқ.',report:'Демо өтініш жасау',map:'Демо карта',otherEvents:'Басқа демо іс-шаралар',
+    joined:'Жазылдыңыз',join:'Демо жазылу',leave:'Қатысудан бас тарту',full:'Орын жоқ',wait:'Демо күту тізіміне қосылу',
     leaveWait:'Күту тізімінен шығу',waiting:'Күту тізімінде',cancelled:'Бас тартылды',finished:'Аяқталды',
     opened:'Ашық',running:'Өтіп жатыр',timeZone:'Шымкент уақыты',bring:'Өзіңізбен бірге алыңыз',confirm:'Растау',close:'Жабу',
     joinedCount:(n,max)=>`${max} орынның ${n}-іне жазылды`,
@@ -27,8 +27,8 @@ const copy={
     demo:'Демонстрационные данные. Акции, участники и места сбора условные.',district:'Район',type:'Тип акции',date:'Дата',
     all:'Все',apply:'Показать',reset:'Сбросить фильтры',upcoming:'Ближайшие акции',past:'Прошедшие',
     my:'Мои акции',hours:'Часы помощи',empty:'Нет акций по выбранным фильтрам.',
-    noPast:'Прошедших акций пока нет.',noMine:'Участий пока нет.',report:'Сообщить о проблеме',map:'Демо-карта',otherEvents:'Другие демо-мероприятия',
-    joined:'Вы записаны',join:'Записаться',leave:'Отменить участие',full:'Мест нет',wait:'Встать в лист ожидания',
+    noPast:'Прошедших акций пока нет.',noMine:'Участий пока нет.',report:'Создать демо-обращение',map:'Демо-карта',otherEvents:'Другие демо-мероприятия',
+    joined:'Вы записаны',join:'Демо-запись',leave:'Отменить участие',full:'Мест нет',wait:'В демо-лист ожидания',
     leaveWait:'Выйти из листа ожидания',waiting:'В листе ожидания',cancelled:'Отменено',finished:'Завершена',
     opened:'Открыта',running:'Идёт',timeZone:'Время Шымкента',bring:'Что взять с собой',confirm:'Подтвердить',close:'Закрыть',
     joinedCount:(n,max)=>`Записалось ${n} из ${max}`,
@@ -148,6 +148,7 @@ export function renderActivityDialog(lang) {
     <p>${label(lang,districts[activity.district].name)} · ${detailDate(lang,activity)}</p><p>${e(label(lang,activity.place))}</p>
     ${action==='join'?`<p><strong>${w.bring}</strong> · ${label(lang,activityTypes[activity.type].bring)}</p>`:''}
     ${action==='wait'?`<p>${w.waitNote}</p>`:''}
+    ${action!=='leave'?demoSaveNote(lang):''}
     <div class="city-activity-actions">
       <button type="button" class="button primary" data-action="cleanup-confirm"${busy?' disabled':''}>${busy?w.working:w.confirm}</button>
       ${actionButton(w.close,'cleanup-close')}

@@ -3,7 +3,7 @@ import {currentProfile,activateProfile,createProfile,signOutProfile,renderLogin,
 import {bookingProfileMatches,renderBookingProfile} from './booking.js';
 import {renderCleanup,cleanupClick,cleanupHistory,cleanupOverview,clearCleanupFeedback,renderActivityDialog,cleanupSubmit} from './cleanup.js';
 import {renderReportForm,renderReportHistory,reportAction,reportSubmit,reportInput,resetReportView} from './city-reports.js';
-import {renderHomeChat,homeChatAction,homeChatSubmit,homeChatInput,fitHomeChat,resetHomeChat} from './home-chat.js';
+import {renderHomeChat,homeChatAction,homeChatSubmit,homeChatInput,fitHomeChat,resetHomeChat,closeHomeChat} from './home-chat.js';
 import {renderEducation,educationClick,educationSubmit,educationHistory,educationBookingRole} from './education-hub.js';
 import {updateEducation} from './education-data.js';
 import {renderLessonProfile,renderLessonBell,renderLessonDialog,openLesson,lessonClick,lessonSubmit,lessonInput,clearLessonView} from './education-lessons.js';
@@ -373,7 +373,18 @@ document.addEventListener('click',event=>{
   else if(servicesOpen && !event.target.closest('.services-menu')){servicesOpen=false;render()}
   const link=event.target.closest('[data-link]');
   if(link && !event.ctrlKey && !event.metaKey && !event.shiftKey && event.button===0){
-    event.preventDefault();navigate(link.getAttribute('href'));return;
+    event.preventDefault();
+    const fromChat=Boolean(link.closest?.('.home-chat-panel'));
+    if(fromChat)closeHomeChat();
+    navigate(link.getAttribute('href'));
+    if(fromChat && location.hash){
+      const destination=document.getElementById?.(location.hash.slice(1));
+      if(destination){
+        if(!destination.hasAttribute('tabindex'))destination.setAttribute('tabindex','-1');
+        destination.focus({preventScroll:true});
+      }
+    }
+    return;
   }
   const language=event.target.closest('[data-lang]');
   if(language && ['kk','ru'].includes(language.dataset.lang)){lang=language.dataset.lang;writeLocal('language',lang);render();return}
