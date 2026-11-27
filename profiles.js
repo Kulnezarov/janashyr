@@ -126,8 +126,8 @@ demos.push(
   {id:'preview-lesson-lira',alias:'Лира',role:'teacher',demo:true}
 );
 const words = {
-  kk:{ login:'Демонстрациялық кіру', intro:'Осы браузерде қолданылатын профильді таңдаңыз немесе жаңасын жасаңыз.', presets:'Дайын демо аккаунттар', create:'Аккаунт жасау', alias:'Лақап ат', aliasHint:'Нақты аты-жөніңізді жазбаңыз', role:'Рөл', mine:'Жеке кабинет', profile:'Профиль', history:'Әрекеттер тарихы', signout:'Профильден шығу', change:'Басқа профиль', open:'Бөлімді ашу', local:'Профильдер мен демо тарих осы браузерде сақталады. Рөлдер сайттағы әрекеттерді көрсету үшін қолданылады.', type:'Қолжетімді әрекеттер', add:'Жаңа профиль', guests:'Әрекеттерді сақтау үшін демо профиліңізге кіріңіз.', lists:['Қолдау','Оқу','Цифрлық көмек','Донорлық','Қолжетімді орта','Қала']},
-  ru:{ login:'Демонстрационный вход', intro:'Выберите готовый профиль для просмотра или создайте свой в этом браузере.', presets:'Готовые демо-аккаунты', create:'Создать аккаунт', alias:'Псевдоним', aliasHint:'Не указывайте настоящее имя', role:'Роль', mine:'Демонстрационный личный кабинет', profile:'Профиль', history:'История действий', signout:'Выйти из профиля', change:'Другой профиль', open:'Открыть раздел', local:'Профили и демо-история хранятся в этом браузере. Роли показывают доступные действия в интерфейсе.', type:'Доступные действия', add:'Новый профиль', guests:'Войдите в демо-профиль, чтобы сохранить свои действия.', lists:['Поддержка','Обучение','Цифровая помощь','Донорство','Доступная среда','Город']}
+  kk:{ login:'Демонстрациялық кіру', intro:'Осы браузерде қолданылатын профильді таңдаңыз немесе жаңасын жасаңыз.', presets:'Дайын демо профильдер', create:'Профиль жасау', alias:'Лақап ат', aliasHint:'Нақты аты-жөніңізді жазбаңыз', role:'Рөл', mine:'Жеке кабинет', profile:'Профиль', history:'Әрекеттер тарихы', signout:'Профильден шығу', change:'Басқа профиль', open:'Бөлімді ашу', local:'Профильдер мен демо тарих осы браузерде сақталады. Рөлдер сайттағы әрекеттерді көрсету үшін қолданылады.', type:'Қолжетімді әрекеттер', add:'Жаңа профиль', guests:'Әрекеттерді сақтау үшін демо профиліңізге кіріңіз.', lists:['Қолдау','Оқу','Цифрлық көмек','Донорлық','Қолжетімді орта','Қала']},
+  ru:{ login:'Демонстрационный вход', intro:'Выберите готовый профиль для просмотра или создайте свой в этом браузере.', presets:'Готовые демо-профили', create:'Создать профиль', alias:'Псевдоним', aliasHint:'Не указывайте настоящее имя', role:'Роль', mine:'Демонстрационный личный кабинет', profile:'Профиль', history:'История действий', signout:'Выйти из профиля', change:'Другой профиль', open:'Открыть раздел', local:'Профили и демо-история хранятся в этом браузере. Роли показывают доступные действия в интерфейсе.', type:'Доступные действия', add:'Новый профиль', guests:'Войдите в демо-профиль, чтобы сохранить свои действия.', lists:['Поддержка','Обучение','Цифровая помощь','Донорство','Доступная среда','Город']}
 };
 const index = lang => lang==='kk'?0:1;
 export const profileRoleName = (profile,lang) => roles[profile.role][index(lang)];
@@ -160,7 +160,7 @@ export function signOutProfile(){writeLocal('active',null)}
 export function renderLogin(lang,wasReset=false) {
   const w=words[lang], i=index(lang);
   return `<main class="wrap inner demo-profile-page">
-    <header class="profile-lead"><h1><span class="profile-title-full">${w.login}</span><span class="profile-title-short">${lang==='kk'?'Демо кіру':'Демо-вход'}</span></h1><p>${w.intro}</p></header>
+    <header class="profile-lead photo-hero photo-hero-bleed photo-hero-compact"><h1><span class="profile-title-full">${w.login}</span><span class="profile-title-short">${lang==='kk'?'Демо кіру':'Демо-вход'}</span></h1><p>${w.intro}</p></header>
     ${wasReset?`<p class="success" role="status" id="demo-reset-success">${demoResetText[lang].done}</p>`:''}
     <div class="profile-login-layout"><section aria-labelledby="profile-picks">
       <h2 id="profile-picks">${w.presets}</h2>
@@ -226,7 +226,7 @@ export function renderProfile(lang,profile,hash,sections,rows=[]) {
   const current=names.find(([id])=>id===tab)||names[0];
   const [section,label]=current;
   return `<main class="wrap inner demo-profile-page profile-dashboard">
-    <header class="profile-lead"><span>${w.mine} · ${role[i]}</span><h1>${escapeText(profileName(profile,lang))}</h1></header>
+    <header class="profile-lead photo-hero photo-hero-bleed photo-hero-compact"><span>${w.mine} · ${role[i]}</span><h1>${escapeText(profileName(profile,lang))}</h1></header>
     <div class="profile-history"><aside><nav class="profile-anchors" aria-label="${w.history}">
       ${names.map(([id,name])=>`<a href="/account${id==='overview'?'':'#'+id}" data-link ${section===id?'aria-current="page"':''}>
         <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${profileIcons[id]}</svg>

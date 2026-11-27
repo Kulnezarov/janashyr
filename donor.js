@@ -39,9 +39,8 @@ export function donorAvailability(lang) {
 function home(t,lang) {
   const h=donorHubText[lang];
   return `<main class="inner wrap support-page donor-hub">
-    <a class="back" href="/" data-link>${t.back}</a>
-    <section class="donor-hero">
-      <div class="donor-hero-copy"><p class="donor-small-label">${h.city} / ${t.title}</p><h1>${h.headline}</h1><p>${h.intro}</p>
+    <section class="donor-hero photo-hero photo-hero-bleed">
+      <div class="donor-hero-copy"><a class="back" href="/" data-link>${t.back}</a><p class="donor-small-label">${h.city} / ${t.title}</p><h1>${h.headline}</h1><p>${h.intro}</p>
         <div class="donor-hero-actions"><a class="button donor-submit" href="#donor-booking">${t.become}</a><a class="donor-hero-link" href="#donor-center-search">${t.centers}</a></div>
       </div>
     </section>

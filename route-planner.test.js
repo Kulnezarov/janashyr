@@ -83,8 +83,8 @@ test('a response arriving after a newer request is ignored even when fetch ignor
 test('no key makes no request and preserves the bilingual training scheme',async()=>{
   const router=createRouter({apiKey:'  ',fetcher:()=>{assert.fail('must stay offline');}});
   assert.equal((await router.build(input)).code,'missingKey');
-  assert.match(renderAccess(base+'/map','ru'),/Для построения маршрутов нужен ключ/);
-  assert.match(renderAccess(base+'/map','kk'),/Бағыт құру үшін кілт керек/);
+  assert.match(renderAccess(base+'/map','ru'),/Сравните маршруты на учебной схеме/);
+  assert.match(renderAccess(base+'/map','kk'),/Шартты сызбада бағыттарды салыстырып/);
   assert.match(renderAccess(base+'/map','ru'),/data-action="access-save"/);
 });
 

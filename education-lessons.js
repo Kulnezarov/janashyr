@@ -144,10 +144,10 @@ function teacherSchedule(lang,slots) {
   </div>`).join('') : `<p>${w.noSchedule}</p>`;
 }
 
-function bookingCard(lang,slot,booking,person,actions,showVenue=false) {
+function bookingCard(lang,slot,booking,person,actions,showVenue=false,heading='h4') {
   const w=copy[lang];
   return `<article class="request-card lesson-card" data-booking-row="${e(booking.id)}">
-    <h4>${subject(slot,lang)} · ${e(person)}</h4><p>${lessonTime(slot,lang)} · ${translate(lang,formats[slot.format])}</p>
+    <${heading}>${subject(slot,lang)} · ${e(person)}</${heading}><p>${lessonTime(slot,lang)} · ${translate(lang,formats[slot.format])}</p>
     ${status(lang,booking.status)}
     ${showVenue?venue(lang,slot):''}
     ${detail(w.comment,booking.comment)}${detail(w.reason,booking.reason)}
@@ -170,7 +170,7 @@ export function renderLessonProfile(lang,profile) {
       let actions='';
       if(['pending','confirmed'].includes(booking.status) && lessonStart(slot)>now)actions=button(w.cancel,'lesson-cancel',slot,booking);
       else if(booking.status==='confirmed' && lessonEnd(slot)<=now && !booking.review)actions=button(w.review,'lesson-review',slot,booking,'button primary');
-      return bookingCard(lang,slot,booking,name(lang,people,booking.teacherId),actions,booking.status==='confirmed');
+      return bookingCard(lang,slot,booking,name(lang,people,booking.teacherId),actions,booking.status==='confirmed','h3');
     }).join(''):`<p>${w.noBookings}</p>`}
   </section>`;
   const incoming=records.filter(({booking})=>booking.status==='pending');

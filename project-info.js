@@ -81,7 +81,7 @@ export function renderProjectInfo(kind,lang) {
   if(!w || !['organizations','about'].includes(kind)) return null;
   const org=kind==='organizations';
   return `<main class="project-info project-info-${kind}">
-    <section class="project-info-hero">
+    <section class="project-info-hero photo-hero">
       <div class="wrap project-info-wrap project-info-hero-shell">
       <nav class="project-info-crumb" aria-label="${lang==='ru'?'Разделы':'Бөлімдер'}"><a href="/" data-link>${locale.home}</a><span aria-hidden="true">/</span><span aria-current="page">${w.title}</span></nav>
         <div class="project-info-intro">

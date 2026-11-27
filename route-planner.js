@@ -102,7 +102,7 @@ function messages(lang){
   const error=result && result.code!=='ok' ? w[result.code==='notFound' && result.walking?'walkingMissing':result.code] : '';
   const pick=state.pick==='start'?w.pickFrom:state.pick==='end'?w.pickTo:state.pick==='mark'?state.report?w.pickReport:w.pickMark:'';
   const status=notice || pick;
-  return `${!hasKey?`<p class="demo-notice" role="status">${w.missingKey}</p>`:''}
+  return `${!hasKey && !state.report?`<p class="demo-notice">${w.missingKey}</p>`:''}
     ${status?`<p role="status" class="demo-notice">${status}</p>`:''}
     ${state.pending?`<p role="status">${w.pending}</p>`:''}
     ${error?`<p role="alert" class="route-error" data-route-error="${result.code}">${error}</p>`:''}
@@ -158,25 +158,29 @@ function obstacleEditor(lang){
 export function renderRoutePage(lang,detailsOpen=false){
   const w=routeCopy[lang];
   return `<main class="route-live">
+    <header class="photo-hero photo-hero-compact">
+      <div class="wrap">
+        <a class="text-link" href="/directions/accessibility" data-link>${w.back}</a>
+        <h1 id="route-panel-title">${state.report?w.reportLink:hasKey?w.title:w.opportunities}</h1>
+      </div>
+    </header>
     <div class="route-map-stage">
-      <div id="route-map-host" aria-label="${w.map}"></div>
+      <div id="route-map-host" role="region" aria-label="${w.map}"></div>
       ${state.mapStatus?`<p class="route-map-status" role="status">${w[state.mapStatus]}</p>`:''}
       <section class="route-panel" aria-labelledby="route-panel-title">
-        <a class="text-link" href="/directions/accessibility" data-link>${w.back}</a>
-        <h1 id="route-panel-title">${state.report?w.reportLink:w.title}</h1>
         ${messages(lang)}
-        ${!state.report?`
+        ${!state.report && hasKey?`
           <div class="route-addresses">${addressField('start',lang)}${addressField('end',lang)}</div>
           <p class="route-search-note">${w.searchNote} <a class="text-link" href="https://operations.osmfoundation.org/policies/nominatim/" target="_blank" rel="noopener noreferrer">${w.policy}</a></p>
           <div class="route-buttons">${button(w.swap,'route-swap')}&nbsp;${button(w.mark,'route-mark')}
-            ${button(w.build,'route-build','','button primary',!hasKey)}
+            ${button(w.build,'route-build','','button primary')}
           </div>
           <fieldset class="route-mode"><legend>${w.mode}</legend>
             ${['strict','soft'].map(mode=>`<label><input type="radio" name="route-mode" value="${mode}"${state.mode===mode?' checked':''}> ${w[mode]}</label>`).join('')}
             <p>${state.mode==='soft'?w.softHint:w.strictHint}</p>
-          </fieldset>`:''}
+          </fieldset>`:!state.report?`<div class="route-buttons">${button(w.mark,'route-mark')}</div>`:''}
         ${obstacleEditor(lang)}${resultCard(lang,detailsOpen)}
-        <p class="route-disclaimer">${w.disclaimer}</p>
+        ${hasKey && !state.report?`<p class="route-disclaimer">${w.disclaimer}</p>`:''}
         ${!hasKey?`<a class="text-link" href="${routePath}" data-link>${w.demo}</a>`:''}
       </section>
     </div>

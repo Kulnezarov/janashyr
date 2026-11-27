@@ -1,6 +1,6 @@
 import {sitePath} from './ui.js';
 import {scheduleDate,scheduleTimestamp,helpPlace,timeAfter} from './ui.js';
-import {readLocal,writeLocal,getProfiles} from './profiles.js';
+import {readLocal,writeLocal,writeLocalObject,getProfiles,storageText} from './profiles.js';
 import {supportIconPath} from './landing-sections.js';
 import {pageShell,demoNotice} from './ui.js';
 import {text,courses,categories,guides,reflection} from './support-content.js';
@@ -8,7 +8,7 @@ const state={requests:[],messages:[],query:'',category:'all',guideQuery:'',draft
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const base='/directions/support';
 const links=['psychology','education','digital'];
-Object.assign(state,{specialty:'all',topic:'',clinician:null,bookingError:false,motionPaused:false,reflection:{step:0,answers:[]}});
+Object.assign(state,{specialty:'all',topic:'',clinician:null,bookingError:false,reflection:{step:0,answers:[]}});
 const L=(s,l)=>s[l==='kk'?1:2];
 const button=(label,attrs='')=>`<button class="button primary" ${attrs}>${label}</button>`;
 const shell=(t,title,body)=>pageShell({base,back:t.back,kicker:t.support,title,body});
@@ -21,12 +21,12 @@ function supportHome(t, lang) {
     : ['Выберите специалиста по теме и удобное время для демо-консультации.','Изучайте языки, математику и цифровые навыки в своём темпе.','Разберитесь с телефоном и онлайн-сервисами по пошаговым инструкциям.'];
   const names=[t.psych,t.edu,t.digital];
   return `<main class="support-page support-landing">
-    <header class="support-welcome"><div class="wrap">
+    <header class="support-welcome photo-hero"><div class="wrap">
       <a class="back" href="/" data-link>${t.back}</a>
       <h1>${t.support}</h1><p>${kk?'Психологиялық қолдау, тегін оқу және цифрлық көмек. Өзіңізге керегін таңдаңыз.':'Психологическая поддержка, бесплатное обучение и цифровая помощь. Выберите, что нужно вам.'}</p>
-      <svg class="support-welcome-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${supportIconPath}</svg>
+      <a class="button primary" href="#support-options">${kk?'Қызметтерді қарау':'Посмотреть услуги'}</a>
     </div></header>
-    <div class="wrap support-feature-grid">${links.map((slug,i)=>`<a class="support-feature feature-${slug}" href="${base}/${slug}" data-link><div><h2>${names[i]}</h2><p>${descriptions[i]}</p><span class="support-feature-arrow" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a>`).join('')}</div></main>`;
+    <div class="wrap support-feature-grid" id="support-options" tabindex="-1">${links.map((slug,i)=>`<a class="support-feature feature-${slug}" href="${base}/${slug}" data-link><div><h2>${names[i]}</h2><p>${descriptions[i]}</p><span class="support-feature-arrow" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 24 24" fill="none"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a>`).join('')}</div></main>`;
 }
 
 const clinicians = [
@@ -38,23 +38,27 @@ const psychWords = {
   kk: {
     roles:{clinical:'Клиникалық психолог',therapy:'Психотерапевт',counsel:'Психолог-кеңесші',gestalt:'Гештальт-терапевт'},
     topics:{stress:'Мазасыздық пен стресс',fear:'Қорқыныш',burnout:'Эмоциялық қажу',crisis:'Дағдарыс кезіндегі қолдау',lonely:'Жалғыздық сезімі'},
-    title:'Біздің психологтар', demo:'Демо. Аты-жөндер, портреттер, тәжірибе мен кесте ойдан жасалған. Нақты қабылдау жүргізілмейді.',
+    title:'Демо мамандар', demo:'Мамандар мен олардың кестелері үлгі ретінде берілген.',
     filters:'Мамандық бойынша', all:'Барлық мамандар', helps:'Қандай мәселелермен жұмыс істейді', years:n=>`${n} жыл тәжірибе`,
     book:'Жазылу', survey:'Неден бастаймын?', question:'Сізге қандай тақырып бойынша қолдау керек?', suggest:'Мамандарды көрсету',
     noMatch:'Бұл сүзгіге сай маман табылмады.', reset:'Сүзгіні тазарту', schedule:'Қабылдау кестесі', zone:'Шымкент уақыты · Келесі 7 күн',
     day:'Күн', time:'Уақыт', taken:'Бос емес', confirm:'Демо жазылуды растау', invalid:'Бұл уақыт бос емес немесе өтіп кеткен. Басқа уақытты таңдаңыз.',
-    intro:'Мазасыздық, стресс немесе қиын кезең туралы сөйлесуге маман таңдаңыз.',
+    intro:'Мазасыздық, стресс немесе қиын кезең кезінде қолдау іздесеңіз, осында маман таңдау мен жазылуды байқап көре аласыз.',
+    local:'Жазылу осы браузерде ғана сақталады. Нақты консультация өткізілмейді.',
+    count:n=>`Табылған маман саны: ${n}`,
     optional:'Тақырып бойынша іріктеу (міндетті емес)', specialist:'Маман'
   },
   ru: {
     roles:{clinical:'Клинический психолог',therapy:'Психотерапевт',counsel:'Психолог-консультант',gestalt:'Гештальт-терапевт'},
     topics:{stress:'Тревога и стресс',fear:'Страхи',burnout:'Эмоциональное выгорание',crisis:'Поддержка в кризисе',lonely:'Чувство одиночества'},
-    title:'Наши психологи', demo:'Демо. Имена, портреты, стаж и расписание вымышлены. Реальные консультации не проводятся.',
+    title:'Демо-специалисты', demo:'Профили и расписания приведены для примера.',
     filters:'Специальность', all:'Все специалисты', helps:'С чем помогает', years:n=>`${n} ${n===2?'года':'лет'} опыта`,
     book:'Записаться', survey:'С чего начать?', question:'С каким вопросом вы хотите получить поддержку?', suggest:'Показать специалистов',
     noMatch:'По этому фильтру специалисты не найдены.', reset:'Сбросить фильтры', schedule:'Расписание консультаций', zone:'Время Шымкента · Следующие 7 дней',
     day:'Дата', time:'Время', taken:'Занято', confirm:'Подтвердить демо-запись', invalid:'Время занято или уже прошло. Выберите другое.',
-    intro:'Выберите специалиста, с которым можно поговорить о тревоге, стрессе или сложном периоде.',
+    intro:'Если вы ищете поддержку в сложный период, здесь можно попробовать выбрать специалиста и записаться на консультацию.',
+    local:'Запись сохраняется только в этом браузере. Реальная консультация не состоится.',
+    count:n=>`Найдено специалистов: ${n}`,
     optional:'Подбор по теме (необязательно)', specialist:'Специалист'
   }
 };
@@ -97,7 +101,7 @@ function booking(t, lang, person) {
     <button class="psych-close" type="button" data-action="psych-close" aria-label="${t.close}" autofocus>×</button>
     <h2 id="psych-booking-title">${w.schedule}</h2><p><strong>${name}</strong> · ${w.zone}</p>
     ${created(t)}
-    <form id="consult-form">
+    ${state.notice==='success'?'':`<form id="consult-form" data-clinician="${person.id}">
       <fieldset class="booking-format"><legend>${t.format}</legend>
         ${[['online',t.online],['offline',t.offline]].map(([id,label])=>`<label><input type="radio" name="format" value="${id}" ${(state.drafts.consult.format||'online')===id?'checked':''}><span>${label}</span></label>`).join('')}
       </fieldset>
@@ -109,9 +113,9 @@ function booking(t, lang, person) {
           return `<label class="psych-time"><input type="radio" name="slot" value="${key}T${time}" aria-label="${fmt.format(date)}, ${time}${taken?', '+w.taken:''}" ${taken?'disabled':''} ${!taken&&state.drafts.consult.slot===key+'T'+time?'checked':''} required><span>${time}–${timeAfter(time,50)}${taken?` <small>${w.taken}</small>`: ''}</span></label>`;
         }).join('')}</div></td></tr>`).join('')}</tbody>
       </table>
-      <p class="psych-booking-error" role="alert">${state.bookingError?w.invalid:''}</p>
-      ${button(w.confirm,'type="submit"')}
-    </form>
+      <p class="psych-booking-error" role="alert">${state.bookingError==='storage'?storageText[lang].saveFailed:state.bookingError?w.invalid:''}</p>
+      ${button(w.confirm,'type="submit" id="consult-submit"')}
+    </form>`}
   </dialog>`;
 }
 
@@ -121,24 +125,27 @@ function psych(t, lang) {
   const selected = clinicians.find(p=>p.id===state.clinician);
 
   const kk = lang === 'kk';
-  const moving = filtered.length === clinicians.length;
-  const card = (p, duplicate = false) => `<article class="psych-clinician">
+  const card = p => `<article class="psych-clinician">
     <div class="psych-portrait portrait-${p.portrait}" aria-hidden="true"></div>
     <div class="psych-clinician-body">
       <h3>${clinicianName(p,lang)}</h3>
       <p class="psych-roles">${p.roles.map(role=>w.roles[role]).join(', ')}</p>
       <p class="psych-experience">${w.years(p.years)}</p>
       <p class="psych-helps"><strong>${w.helps}:</strong> ${p.topics.map(topic=>w.topics[topic]).join(', ')}.</p>
-      <button class="button psych-cta" type="button" data-action="psych-book" data-id="${p.id}" aria-haspopup="dialog" ${duplicate?'tabindex="-1"':''}>${w.book}</button>
+      <button class="button psych-cta" type="button" data-action="psych-book" data-id="${p.id}" aria-haspopup="dialog" aria-label="${w.book}: ${clinicianName(p,lang)}">${w.book}</button>
     </div>
   </article>`;
   return `<main class="support-page psych-page">
-    <section class="psych-hero">
-      <a class="back" href="${base}" data-link>${t.back}</a>
+    <section class="psych-hero photo-hero">
       <div class="wrap psych-hero-copy">
+        <a class="back" href="${base}" data-link>${t.back}</a>
         <div class="psych-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${supportIconPath}</svg><h1>${t.psych}</h1></div>
         <p>${w.intro}</p>
-        <a class="button psych-cta" href="#psych-clinicians">${kk?'Маман таңдау':'Выбрать специалиста'}</a>
+        <div class="psych-hero-actions">
+          <a class="button psych-cta" href="#psych-clinicians">${kk?'Маман таңдау':'Выбрать специалиста'}</a>
+          <a class="button secondary" href="#psych-reflection">${w.survey}</a>
+        </div>
+        <p class="psych-demo-caption">${w.local}</p>
       </div>
     </section>
     <div class="wrap psych-content">
@@ -148,15 +155,8 @@ function psych(t, lang) {
           ${[['all',kk?'Барлығы':'Все'],...Object.entries(w.roles)].map(([id,label])=>`<button type="button" data-action="psych-specialty" data-id="${id}" aria-pressed="${state.specialty===id}">${label}</button>`).join('')}
         </div>
         ${state.topic?`<p>${w.topics[state.topic]} <button class="text-button" type="button" data-action="psych-reset">${w.reset}</button></p>`:''}
-        ${filtered.length?`<div class="psych-carousel ${moving?'is-loop':''} ${state.motionPaused?'is-paused':''}">
-          <div class="psych-carousel-scroll">
-            <div class="psych-carousel-track">
-              <div class="psych-carousel-group">${filtered.map(p=>card(p)).join('')}</div>
-              ${moving?`<div class="psych-carousel-group psych-carousel-copy" aria-hidden="true">${filtered.map(p=>card(p,true)).join('')}</div>`:''}
-            </div>
-          </div>
-        </div>`:`<p>${w.noMatch}</p>`}
-        ${moving?`<button class="psych-motion text-button" type="button" data-action="psych-motion" aria-pressed="${state.motionPaused}">${state.motionPaused?(kk?'Қозғалысты жалғастыру':'Возобновить движение'):(kk?'Қозғалысты тоқтату':'Остановить движение')}</button>`:''}
+        <p class="psych-filter-result" role="status">${filtered.length ? w.count(filtered.length) : w.noMatch}</p>
+        ${filtered.length?`<div class="psych-clinician-grid">${filtered.map(card).join('')}</div>`:''}
       </section>
       ${reflectionPanel(lang)}
     </div>
@@ -198,69 +198,6 @@ function reflectionPanel(lang) {
   </section>`;
 }
 
-export function bindPsychCarousel(viewport) {
-  if(!viewport)return;
-  const group=viewport.querySelector('.psych-carousel-group');
-  const loop=Boolean(viewport.querySelector('.psych-carousel-copy'));
-  const region=viewport.closest('.psych-carousel');
-  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
-  let drag=null, suppressClick=false, last=0, position=0, busyUntil=0;
-  const normalize=value=>{
-    const width=group.offsetWidth;
-    return loop && !reduced.matches && width ? ((value%width)+width)%width : value;
-  };
-  const pauseForTouch=()=>{busyUntil=performance.now()+2200};
-  viewport.addEventListener('touchstart',pauseForTouch,{passive:true});
-  viewport.addEventListener('touchend',pauseForTouch,{passive:true});
-  viewport.addEventListener('touchcancel',pauseForTouch,{passive:true});
-  const canHover=window.matchMedia('(hover: hover)');
-  viewport.addEventListener('pointerdown',event=>{
-    if(event.pointerType!=='mouse' || ![0,2].includes(event.button))return;
-    suppressClick=false;
-    drag={id:event.pointerId,x:event.clientX,start:viewport.scrollLeft,moved:false};
-  });
-  viewport.addEventListener('pointermove',event=>{
-    if(!drag || drag.id!==event.pointerId)return;
-    const delta=event.clientX-drag.x;
-    if(!drag.moved && Math.abs(delta)<5)return;
-    if(!drag.moved){
-      drag.moved=true;
-      viewport.setPointerCapture(event.pointerId);
-      viewport.classList.add('is-dragging');
-    }
-    viewport.scrollLeft=normalize(drag.start-delta);
-  });
-  const end=event=>{
-    if(!drag || drag.id!==event.pointerId)return;
-    suppressClick=drag.moved;
-    drag=null;
-    viewport.classList.remove('is-dragging');
-  };
-  viewport.addEventListener('pointerup',end);
-  viewport.addEventListener('pointercancel',end);
-  viewport.addEventListener('pointerleave',event=>{if(drag && !drag.moved)end(event)});
-  viewport.addEventListener('contextmenu',event=>event.preventDefault());
-  viewport.addEventListener('click',event=>{
-    if(suppressClick && event.detail){
-      event.preventDefault();event.stopPropagation();suppressClick=false;
-    }
-  },true);
-  if(!loop)return;
-  const animate=now=>{
-    if(!viewport.isConnected)return;
-    const paused=reduced.matches || drag || now<busyUntil || region.matches(':focus-within, .is-paused') || (canHover.matches && region.matches(':hover'));
-    if(!paused && last && !document.hidden){
-      if(Math.abs(viewport.scrollLeft-position)>1)position=viewport.scrollLeft;
-      position=normalize(position+Math.min(now-last,32)*0.025);
-      viewport.scrollLeft=position;
-    } else position=viewport.scrollLeft;
-    last=now;
-    requestAnimationFrame(animate);
-  };
-  requestAnimationFrame(animate);
-}
-
-
 function education(t,l){let opts=categories[l].map((x,i)=>`<option value="${courses[i][0]}" ${state.category===courses[i][0]?'selected':''}>${x}</option>`).join('');let list=courses.filter(c=>(state.category==='all'||c[0]===state.category)&&L(c,l).toLowerCase().includes(state.query.toLowerCase()));return shell(t,t.edu,`<p class="lead">${t.courseIntro}</p>${notice(t)}<div class="filters"><label>${t.search}<input id="course-search" type="search" placeholder="${t.searchCourses}" value="${esc(state.query)}"></label><label>${t.category}<select id="course-category"><option value="all">${t.all}</option>${opts}</select></label></div><div id="course-results" class="course-grid">${list.length?list.map(c=>`<a class="support-tile" href="${base}/education/${c[0]}" data-link><span class="kicker">${l==='kk'?'Демо курс':'Демо-курс'}</span><h2>${L(c,l)}</h2><p>${t.enrollStatus}</p><span>${t.open}</span></a>`).join(''):`<p>${t.noResults}</p>`}</div>`)}
 function coursePage(t,l,id){let c=courses.find(x=>x[0]===id);if(!c)return education(t,l);let registered=state.requests.some(x=>x.type==='course'&&x.course===id);return shell(t,L(c,l),`<p class="lead">${t.courseDesc}</p>${notice(t)}<div class="panel"><span class="kicker">${t.enrollStatus}</span><p>${t.courseIntro}</p>${created(t)}${button(registered?t.enrolled:t.enroll,`data-action="enroll" data-id="${id}" ${registered?'disabled':''}`)}</div>`)}
 function digital(t,l){let result=guides[l].filter(g=>g.join(' ').toLowerCase().includes(state.guideQuery.toLowerCase()));return shell(t,t.digital,`<div class="accessible digital-workspace"><div class="digital-guides"><p class="lead">${t.digitalIntro}</p><h2>${t.guides}</h2><label>${t.search}<input id="guide-search" type="search" placeholder="${t.searchGuide}" value="${esc(state.guideQuery)}"></label><div id="guide-results">${result.length?result.map(g=>`<details class="guide"><summary>${g[0]}</summary><ol>${g.slice(1).map(step=>`<li>${step}</li>`).join('')}</ol></details>`).join(''):`<p>${t.noResults}</p>`}</div></div><section class="panel digital-request"><h2>${t.volunteer}</h2><p>${t.volunteerText}</p><p class="digital-safety">${t.safety}</p>${notice(t)}${created(t)}<form id="volunteer-form"><label>${t.question}<textarea name="subject" required maxlength="300" rows="3">${esc(state.drafts.volunteer.subject||'')}</textarea></label>${button(t.send,'type="submit"')}</form></section></div>`)}
@@ -287,18 +224,7 @@ export function supportAction(action,id,lang,render){let t=text[lang];
   if(action==='psych-close'){
     const previous=state.clinician;
     state.clinician=null;state.bookingError=false;state.notice='';render();
-    document.querySelector(`.psych-carousel-group:not(.psych-carousel-copy) [data-id="${previous}"]`)?.focus({preventScroll:true});
-    return true;
-  }
-  if(action==='psych-motion'){
-    const carousel=document.querySelector('.psych-carousel');
-    const control=document.querySelector('[data-action="psych-motion"]');
-    state.motionPaused=!state.motionPaused;
-    carousel?.classList.toggle('is-paused',state.motionPaused);
-    if(control){
-      control.setAttribute('aria-pressed',String(state.motionPaused));
-      control.textContent=state.motionPaused?(lang==='kk'?'Қозғалысты жалғастыру':'Возобновить движение'):(lang==='kk'?'Қозғалысты тоқтату':'Остановить движение');
-    }
+    document.querySelector(`.psych-clinician-grid [data-id="${previous}"]`)?.focus({preventScroll:true});
     return true;
   }
   if(action==='reflection-back' || action==='reflection-reset'){
@@ -336,16 +262,21 @@ export function supportSubmit(form,lang,render){let t=text[lang];
   }
   if(form.id==='consult-form'){
     const data=new FormData(form);
-    const person=clinicians.find(p=>p.id===state.clinician);
+    const person=clinicians.find(p=>p.id===(form.dataset?.clinician || state.clinician));
     const [date,time]=String(data.get('slot')||'').split('T');
     const format=data.get('format');
+    state.clinician=person?.id || null;
     const available=person && clinicianDays(person).some(d=>d.key===date && d.slots.includes(time));
     if(!available || isTaken(person.id,date,time) || !['online','offline'].includes(format)){
       state.bookingError=true;render();return true;
     }
-    state.requests.unshift({type:'consult',clinician:person.id,date,time,format,created:Date.now()});
+    const requests=[{type:'consult',clinician:person.id,date,time,format,created:Date.now()},...state.requests];
+    if(supportProfileId && !writeLocalObject('support-'+supportProfileId,requests.map(({subject,...entry})=>entry))){
+      state.bookingError='storage';render();return true;
+    }
+    state.requests=requests;
     state.drafts.consult={};state.open.clear();state.bookingError=false;state.notice='success';render();
-    document.querySelector('#psych-booking .success')?.scrollIntoView({block:'nearest'});
+    document.querySelector('#psych-booking .success a')?.focus();
     return true;
   }
   if(form.id==='chat-form'){let data=new FormData(form);sendChat(data.get('message'),lang,render);return true}if(form.id==='volunteer-form'){
@@ -361,7 +292,7 @@ export function supportInput(el,lang,render){
   }
 let draftKey={'consult-form':'consult','volunteer-form':'volunteer','chat-form':'chat'}[el.form?.id];if(draftKey&&el.name)state.drafts[draftKey][el.name]=el.value;if(el.id==='course-search'||el.id==='guide-search'){let id=el.id,pos=el.selectionStart;state[id==='course-search'?'query':'guideQuery']=el.value;render();let next=document.getElementById(id);next?.focus();try{next?.setSelectionRange(pos,pos)}catch{}return true}if(el.id==='course-category'){state.category=el.value;render();return true}if(el.name==='date')el.setCustomValidity('');return false}
 export function clearNotice(){state.notice='';state.clinician=null}
-export function endSession(){Object.assign(state,{specialty:'all',topic:'',clinician:null,bookingError:false,motionPaused:false,reflection:{step:0,answers:[]}});clearTimeout(state.timer);state.messages=[];state.requests=[];state.open.clear();state.typing=false;state.notice='';state.drafts={consult:{},volunteer:{},chat:{}}}
+export function endSession(){Object.assign(state,{specialty:'all',topic:'',clinician:null,bookingError:false,reflection:{step:0,answers:[]}});clearTimeout(state.timer);state.messages=[];state.requests=[];state.open.clear();state.typing=false;state.notice='';state.drafts={consult:{},volunteer:{},chat:{}}}
 
 export function psychAvailability(lang){
   const fmt={format: date => scheduleDate(lang,date,{weekday:'short',day:'numeric',month:'short'})};

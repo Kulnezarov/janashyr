@@ -156,15 +156,14 @@ export function renderEducation(lang,profile) {
     : `<div class="edu-access"><p>${state.view==='teacher'?w.forLearner:w.forTeacher}</p></div>`;
   return `<main class="edu-hub">
     <div class="wrap edu-wrap">
-      <nav class="edu-breadcrumb" aria-label="${lang==='kk'?'Бөлімдер':'Разделы'}"><a href="/directions/support" data-link>${w.back}</a><span aria-hidden="true">/</span><span aria-current="page">${w.name}</span></nav>
-      <section class="edu-hero">
+      <section class="edu-hero photo-hero photo-hero-bleed">
+        <nav class="edu-breadcrumb" aria-label="${lang==='kk'?'Бөлімдер':'Разделы'}"><a href="/directions/support" data-link>${w.back}</a><span aria-hidden="true">/</span><span aria-current="page">${w.name}</span></nav>
         <div><h1>${w.name}</h1><p class="edu-lead">${w.lead}</p><p>${w.intro}</p>
           <div class="edu-hero-actions">
             <a class="edu-button edu-button-on-dark" href="#education-search">${w.search}</a>
             <a class="edu-courses-link" href="/directions/support/education/courses" data-link>${w.courses}</a>
           </div>
         </div>
-        <div class="edu-hero-art" aria-hidden="true"><span class="edu-notebook"></span><span class="edu-notebook edu-notebook-two"></span><span class="edu-pencil"></span></div>
       </section>
       ${renderLessonCatalog(lang,profile)}
       <section class="edu-directory" aria-labelledby="edu-directory-title">
@@ -268,7 +267,7 @@ export function educationHistory(lang,profile) {
   const w=copy[lang];
   const {rows:entries,issue}=saved(profile);
   const feedback=state.status==='readOnly'?w.readOnly:storageText[lang][issue];
-  return `<section id="education-history" class="edu-history" aria-labelledby="edu-history-title"><h3 id="edu-history-title">${w.history}</h3>
+  return `<section id="education-history" class="edu-history" aria-labelledby="edu-history-title"><h2 id="edu-history-title">${w.history}</h2>
     ${feedback?`<p class="edu-notice" role="alert">${feedback}</p>`:''}
     ${entries.length?`<ul>${entries.map(row=>`<li><div><strong>${escape(tr(row.alias,lang))}</strong><span>${escape(tr(subjects[row.subject],lang))}${Number.isFinite(row.at)?' · '+scheduleTimestamp(lang,row.at,false):''}</span>${row.format?`<span>${helpWindowLabel(lang,row)}</span>`:''}</div>
     <button type="button" class="edu-button edu-button-neutral" data-action="edu-unsave" data-id="${escape(row.id)}">${w.undo}</button></li>`).join('')}</ul>`:`<p>${w.emptyHistory}</p>`}

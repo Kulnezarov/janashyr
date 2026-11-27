@@ -204,13 +204,13 @@ export function renderDigital(lang,profile) {
     return (view.category==='all' || category===view.category) && query.every(word=>haystack.includes(word));
   });
   return `<main class="digital-hub" lang="${lang==='ru'?'ru':'kk'}">
-    <section class="digital-hero">
+    <section class="digital-hero photo-hero">
       <div class="wrap">
         <a class="back" href="/directions/support" data-link>${w.back}</a>
         <h1>${w.title}</h1><p>${w.intro}</p>
         <div class="digital-hero-links"><a class="button primary" href="#digital-guides">${w.jump}</a><a class="button secondary" href="#digital-request">${w.help}</a><a class="button secondary" href="#digital-volunteers">${volunteerText[lang].heading}</a></div>
-        <form class="digital-search" id="digital-search-form" role="search">
-          <label for="digital-search-query">${w.search}</label>
+        <form class="digital-search" id="digital-search-form" role="search" aria-labelledby="digital-search-label">
+          <label id="digital-search-label" for="digital-search-query">${w.search}</label>
           <div><input id="digital-search-query" name="query" type="search" maxlength="80" placeholder="${w.placeholder}" value="${escapeHtml(view.query)}">
             <button class="button primary" type="submit">${w.find}</button></div>
         </form>

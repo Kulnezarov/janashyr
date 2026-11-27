@@ -24,8 +24,8 @@ const shell=(t,title,body)=>pageShell({base,back:t.back,kicker:'JANASHYR',title,
 function home(t,lang){
   const kk=lang==='kk';
   const secondary=[['obstacle',t.obstacle],['delivery',t.delivery],['discount',t.discount],['places',t.places],['volunteer',t.volunteer]];
-  return `<main class="inner wrap access-workspace"><a class="back" href="/" data-link>JANASHYR</a>
-    <header class="access-hero"><div><h1>${t.title}</h1><p>${t.intro}</p><a class="button primary" href="${base}/map" data-link>${t.map}</a>
+  return `<main class="inner wrap access-workspace">
+    <header class="access-hero photo-hero photo-hero-bleed"><div><a class="back" href="/" data-link>JANASHYR</a><h1>${t.title}</h1><p>${t.intro}</p><a class="button primary" href="${base}/map" data-link>${t.map}</a>
     <a class="button secondary" href="/account#accessibility" data-link>${t.account}</a></div></header>
     ${note(t)}
     <div class="access-home-layout"><section class="access-menu"><h2>${kk?'Қандай көмек керек?':'Какая помощь нужна?'}</h2>
@@ -44,9 +44,9 @@ function mapPage(t,lang){
   const paths=getPaths(), path=paths[state.index]||paths[0];
   const reason=state.start===state.end?t.same:t.unavailable;
   const kk=lang==='kk';
-  return shell(t,t.map,`${note(t)}
-    <p class="demo-notice" role="status">${routeCopy[lang].missingKey} <a href="${base}/map?markers=1" data-link>${routeCopy[lang].opportunities}</a></p>
-    <p>${routeCopy[lang].disclaimer}</p>
+  return shell(t,t.map,`<p class="route-intro">${kk?'Шартты сызбада бағыттарды салыстырып, пандус, жабын және басқа өлшемдерді таңдаңыз.':'Сравните маршруты на учебной схеме. Можно изменить точки и выбрать критерии, например пандусы или покрытие.'}</p>
+    <p class="route-demo-note">${kk?'Сызба нақты көшелерді көрсетпейді және сапарды жоспарлауға арналмаған.':'Схема показывает условные улицы. Для планирования поездки проверьте реальные условия.'}
+    <a class="text-link" href="${base}/map?markers=1" data-link>${routeCopy[lang].opportunities}</a></p>
     <div class="access-route-layout">
       <section class="access-route-settings">
         <h2>${kk?'Маршрут баптаулары':'Настройки маршрута'}</h2>

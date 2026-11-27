@@ -107,12 +107,12 @@ export function siteFooter(t, lang) {
   const c = copy[lang];
   return `<footer class="site-footer" id="contacts"><div class="wrap footer-grid">
     <div><a class="brand footer-brand" href="/" data-link><img src="/assets/care-logo.webp" width="38" height="38" alt="">JANASHYR</a><p class="footer-description">${t.footer}</p></div>
-    <div><h3>${c.links}</h3><ul>${t.lanes.map(lane => `<li><a href="/directions/${lane.slug}" data-link>${lane.title}</a></li>`).join('')}</ul></div>
-    <div><h3>${c.platform}</h3><ul>
+    <div><h2>${c.links}</h2><ul>${t.lanes.map(lane => `<li><a href="/directions/${lane.slug}" data-link>${lane.title}</a></li>`).join('')}</ul></div>
+    <div><h2>${c.platform}</h2><ul>
       <li><a href="/about" data-link>${t.about}</a></li>
       <li><a href="/organizations" data-link>${t.organizations}</a></li>
       <li><a href="/volunteers" data-link>${c.join}</a></li>
     </ul></div>
-    <div class="footer-contacts"><h3>${t.contacts}</h3><p>${c.email}</p></div>
+    <div class="footer-contacts"><h2>${t.contacts}</h2><p>${c.email}</p></div>
   </div><div class="wrap footer-bottom">© JANASHYR <span>${t.demo}</span></div></footer>`;
 }

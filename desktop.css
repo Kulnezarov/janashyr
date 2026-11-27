@@ -126,8 +126,6 @@
   .psych-content { padding-top: 34px; }
   .psych-directory > header, .psych-specialties { max-width: none; }
   .psych-specialties button[aria-pressed="true"] { background: #dfeae0; color: #20432e; }
-  .psych-carousel .psych-clinician { border-color: #e7e0d5; box-shadow: none; }
-  .psych-motion { margin-left: 0; }
   dialog.psych-booking { background: #fffdf9; border: 1px solid #e0d6df; box-shadow: 0 24px 80px #2413294a; border-radius: 17px; }
   dialog.psych-booking::backdrop { background: #38263b91; backdrop-filter: blur(8px); }
   .booking-format label { flex: 1; }
@@ -352,8 +350,6 @@
   .psych-page .psych-hero { padding: 54px 0 27px; }
   .psych-page .psych-content { padding-block: 26px 48px; }
   .psych-specialties button { min-height: 44px; }
-  .psych-carousel .psych-clinician { width: clamp(225px, 56vw, 320px); }
-  .psych-carousel .psych-carousel-scroll { overflow-x: auto; scrollbar-width: thin; }
   .psych-close { width: 44px; height: 44px; }
   .psych-time span, .booking-format span, .psych-topics label { min-height: 44px; }
 
@@ -440,7 +436,6 @@
   .psych-page .psych-title svg { width: 55px; }
   .psych-directory .psych-specialties { gap: 5px; }
   .psych-specialties button { font-size: .87rem; padding: 5px 7px; }
-  .psych-carousel .psych-clinician { width: min(79vw,285px); }
   .psych-topics { grid-template-columns: 1fr 1fr; }
   .psych-survey legend { font-size: .95rem; }
   .psych-topics label { align-items: start; }
@@ -529,7 +524,7 @@
 
 @media (max-width: 420px) {
   /* These descriptions repeat the destination titles; the destination keeps the detail. */
-  .home-service-card p,.support-feature p { display: none; }
+  .support-feature p { display: none; }
   .support-feature { align-items: center; }
   .feature-psychology { align-items: end; }
   .home-service-card { min-height: 107px; }
@@ -539,7 +534,7 @@
 
 @media (max-width: 360px) {
   .site .wrap, .site .header .header-inner { width: calc(100% - 24px); }
-  .profile-pick span { display: none; }
+  .profile-pick span { font-size: .85rem; }
   .theme-home .hero-actions { display: grid; grid-template-columns: 1fr; gap: 6px; }
   .theme-home .hero-actions .button { justify-content: center; }
   .home-how-intro h2 { font-size: 22px; }
@@ -550,10 +545,6 @@
   .cleanup-table :is(th,td):last-child { width: 18%; }
 }
 
-@media (max-width: 980px) and (pointer: coarse) {
-  .psych-carousel-copy,.psych-motion { display: none; }
-  .psych-carousel .psych-carousel-scroll { overscroll-behavior-x: contain; }
-}
 
 .profile-title-short,.chat-clear-short { display:none; }
 @media (max-width:620px) {
@@ -677,8 +668,6 @@ form:has(select[name="format"] option[value="local"]:checked) .help-location { d
 .support-landing .feature-education { background: #f8ebca; }
 .support-landing .feature-digital { background: #e4eee7; }
 
-.psych-carousel .psych-clinician-body { padding: 13px 15px; }
-.psych-carousel .psych-clinician-body .psych-helps { margin: 6px 0 12px; }
 .psych-survey { display: block; max-width: 760px; margin-inline: auto; }
 .psych-survey form { margin-top: 12px; }
 .psych-survey form fieldset { padding: 0; border: 0; }
@@ -792,16 +781,13 @@ form:has(select[name="format"] option[value="local"]:checked) .help-location { d
   .home-map-frame .map-credit { top: 160px; }
   .site .site-footer .footer-grid { gap: 10px 16px; }
   .site .site-footer .footer-description { display: none; }
-  .site .site-footer .footer-grid h3 { margin: 8px 0 3px; }
+  .site .site-footer .footer-grid h2 { margin: 8px 0 3px; }
   .site .site-footer .footer-grid ul { margin: 0; }
   .site .site-footer .footer-grid li { margin: 0; }
   .site .site-footer .footer-grid li a { display: flex; align-items: center; min-height: 42px; }
   .site .site-footer .footer-contacts { border-top: 1px solid #ffffff33; padding-top: 5px; }
   .site .site-footer .footer-contacts p { margin: 0 0 4px; }
   .site .site-footer .footer-bottom { display: flex; flex-wrap: wrap; gap: 4px 10px; }
-  .psych-carousel .psych-clinician .psych-portrait { aspect-ratio: 1.25; }
-  .psych-carousel .psych-clinician-body .psych-helps { margin: 6px 0 8px; }
-  .psych-carousel .psych-clinician-body { padding: 10px 12px; }
   .psych-survey .psych-topics { grid-template-columns: 1fr; }
   .psych-survey .reflection-actions .button { flex: 1; justify-content: center; }
   .cleanup-compact { display: inline; }
@@ -815,10 +801,6 @@ form:has(select[name="format"] option[value="local"]:checked) .help-location { d
   .profile-overview { grid-template-columns: minmax(0,1fr); }
   .profile-dashboard .profile-toolbar .button { flex: 1 1 auto; justify-content: center; }
   .site .demo-profile-page .profile-lead { padding-top: 7px; }
-}
-@media (max-width: 980px) and (prefers-reduced-motion: no-preference) {
-  .psych-carousel.is-loop .psych-carousel-copy { display: flex; }
-  .psych-directory .psych-motion { display: inline-flex; margin-inline: 12px; min-height: 44px; align-items: center; }
 }
 
 /* Continue the section cover through the transparent navigation. */
@@ -928,3 +910,117 @@ form:has(select[name="format"] option[value="local"]:checked) .help-location { d
 .project-info-roadmap .project-info-path { display: block; }
 .project-info-roadmap ul { padding-inline-start: 22px; }
 .project-info-roadmap li + li { margin-top: 6px; }
+
+/* Keep the primary choices legible over photography and on narrow screens. */
+.theme-home .hero .hero-label {
+  width: fit-content;
+  padding: 4px 10px;
+  border: 1px solid #ffffff59;
+  border-radius: 6px;
+  background: #21192db8;
+  color: #fff;
+  letter-spacing: .02em;
+}
+.home-services, .home-how { scroll-margin-top: 16px; }
+.home-service-card p {
+  display: block;
+  max-width: 76%;
+  font-size: .875rem;
+  line-height: 1.45;
+  color: #372d3e;
+}
+.home-service-card:focus-visible { position: relative; z-index: 1; }
+.home-how-intro h2 { text-wrap: balance; }
+.home-chat-panel .home-chat-prompts button { min-height: 44px; }
+
+.psych-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.psych-page .psych-hero-actions .secondary {
+  color: #294b38;
+  background: #fcfaf4;
+  border-color: #849887;
+}
+.psych-page .psych-hero-copy .psych-demo-caption {
+  max-width: 48ch;
+  margin: 12px 0 0;
+  color: #263c32;
+  font-size: .875rem;
+}
+.psych-directory .psych-filter-result {
+  max-width: 936px;
+  margin: 0 auto 12px;
+  color: #3e5a4b;
+  font-size: .875rem;
+}
+.psych-clinician-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(12px, 2vw, 22px);
+  max-width: 936px;
+  margin-inline: auto;
+}
+.psych-clinician-grid .psych-clinician {
+  width: auto;
+  min-width: 0;
+  border-color: #dbdfd4;
+  box-shadow: none;
+}
+.psych-clinician-grid .psych-portrait {
+  aspect-ratio: 1.4;
+  background-position-y: 32%;
+}
+.psych-clinician-grid .psych-cta { align-self: flex-start; margin-top: auto; }
+.psych-directory > header, .psych-directory .psych-specialties { max-width: 936px; }
+
+.route-intro, .route-demo-note { max-width: 68ch; }
+.route-demo-note {
+  padding: 12px 15px;
+  border: 1px solid #c2d8ca;
+  border-radius: 8px;
+  background: #e8f1eb;
+  color: #244b42;
+}
+.route-demo-note a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-inline-start: .25em;
+}
+
+@media (max-width: 760px) {
+  .psych-clinician-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .home-service-card {
+    min-height: 148px;
+    padding: 12px 12px 30px;
+  }
+  .home-service-card p { max-width: 90%; }
+  .home-service-card::before {
+    background: linear-gradient(90deg, var(--card-wash) 40%, var(--card-fade) 78%, transparent);
+  }
+  .psych-page .psych-hero-copy .psych-demo-caption {
+    width: fit-content;
+    padding: 7px 10px;
+    border-radius: 6px;
+    background: #fcfaf4;
+  }
+  .psych-clinician-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 380px) {
+  .home-service-grid { grid-template-columns: minmax(0, 1fr); gap: 9px; }
+  .home-service-card { min-height: 118px; padding: 11px 14px 15px; }
+  .home-service-card p { max-width: 72%; }
+  .site .header:has(.header-mobile-tools .lesson-bell) .brand {
+    gap: 2px;
+    font-size: .8125rem;
+  }
+  .site .header:has(.header-mobile-tools .lesson-bell) .brand-logo {
+    width: 26px;
+    height: 26px;
+  }
+  .header-mobile-tools:has(.lesson-bell) .language-separator { display: none; }
+}

@@ -17,6 +17,8 @@ test('course registration, filtering and consultation cancellation',()=>{
    const form={id:'consult-form',values:{format:'online',slot:available}};
    supportSubmit(form,'ru',render);
    assert.match(accountContent('ru'),/Айда Сарсенова/);
+   assert.doesNotMatch(renderSupport(base+'/psychology','ru'),/id="consult-form"/);
+   supportAction('psych-book','aida','ru',render);
    supportSubmit(form,'ru',render);
    assert.equal((accountContent('ru').match(/Айда Сарсенова/g)||[]).length,1);
    assert.match(renderSupport(base+'/psychology','ru'),/Занято/);

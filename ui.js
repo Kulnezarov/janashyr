@@ -1,6 +1,8 @@
 /** Shared semantic page chrome. Content and application state stay in their feature modules. */
 export function pageShell({base,back,kicker,title,body}){
-  return `<main class="inner wrap support-page"><a class="back" href="${base}" data-link>← ${back}</a><div class="support-heading"><span class="kicker">${kicker}</span><h1>${title}</h1></div>${body}</main>`;
+  return `<main class="inner wrap support-page"><header class="support-heading photo-hero photo-hero-bleed photo-hero-compact">
+    <a class="back" href="${base}" data-link>← ${back}</a><span class="kicker">${kicker}</span><h1>${title}</h1>
+  </header>${body}</main>`;
 }
 export function demoNotice(message){return `<div class="demo-notice" role="note">${message}</div>`}
 

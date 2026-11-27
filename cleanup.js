@@ -109,8 +109,8 @@ export function renderCleanup(lang,profile){
   const upcoming=matching.filter(activity=>activity.status!=='past');
   const past=matching.filter(activity=>activity.status==='past').reverse();
   const card=activity=>activityCard(lang,activity,participationFor(rows,profile?.id,activity.id),now);
-  return `<main class="wrap inner cleanup-page"><a class="back" href="/" data-link>JANASHYR</a>
-    <header class="cleanup-lead"><span>${w.city}</span><h1>${w.title}</h1><p>${w.intro}</p></header>
+  return `<main class="wrap inner cleanup-page">
+    <header class="cleanup-lead photo-hero photo-hero-bleed"><a class="back" href="/" data-link>JANASHYR</a><span>${w.city}</span><h1>${w.title}</h1><p>${w.intro}</p><a class="button primary" href="#city-activities">${w.upcoming}</a></header>
     <p class="cleanup-note">${w.demo} ${w.timeZone}.</p>
     <nav class="cleanup-more city-activity-actions" aria-label="${w.title}">
       <a href="${base}/new" data-link>${w.report}</a><a href="${base}/map" data-link>${w.map}</a><a href="${base}/events" data-link>${w.otherEvents}</a>
